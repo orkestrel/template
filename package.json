@@ -1,7 +1,7 @@
 {
 	"name": "@orkestrel/template",
 	"version": "0.0.1",
-	"description": "TODO: one-line description. Part of the @orkestrel line.",
+	"description": "Stateful template registry and filler with typed placeholders. Part of the @orkestrel line.",
 	"keywords": [
 		"template",
 		"typescript"
@@ -58,6 +58,10 @@
 		"build:src": "npm run build:src:core",
 		"build:src:core": "vite build --config configs/src/vite.core.config.ts && npm run copy dist/src/core/index.d.ts dist/src/core/index.d.cts",
 		"prepublishOnly": "npm run format:check && npm run lint:check && npm run check && npm run build && npm test"
+	},
+	"dependencies": {
+		"@orkestrel/contract": "^0.0.5",
+		"@orkestrel/emitter": "^0.0.3"
 	},
 	"devDependencies": {
 		"@microsoft/api-extractor": "^7.58.11",
