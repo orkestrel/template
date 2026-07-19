@@ -33,7 +33,9 @@ describe('createTemplate', () => {
 	})
 
 	it('createTemplate returns a TemplateInterface', () => {
-		expectTypeOf(createTemplate({ name: 'greeting', content: 'Hi' })).toEqualTypeOf<TemplateInterface>()
+		expectTypeOf(
+			createTemplate({ name: 'greeting', content: 'Hi' }),
+		).toEqualTypeOf<TemplateInterface>()
 	})
 })
 

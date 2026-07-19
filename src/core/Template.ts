@@ -9,9 +9,10 @@ import type {
 	TemplatePlaceholder,
 	TemplateValidationResult,
 } from './types.js'
-import { createContract, resolveField, schemaToParameters } from '@orkestrel/contract'
-import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY, UNSAFE_FIELD_SEGMENTS } from './constants.js'
-import { fillTemplate, placeholderShape } from './helpers.js'
+import { createContract, schemaToParameters } from '@orkestrel/contract'
+import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY, FILL_PATTERN } from './constants.js'
+import { fillTemplate, placeholderShape, resolveSafeField } from './helpers.js'
+import { TemplateError } from './errors.js'
 
 /**
  * A named, versionable template — `{{name}}` tokens in `content`, filled
@@ -42,10 +43,28 @@ export class Template implements TemplateInterface {
 	readonly #contract: ContractInterface<unknown>
 
 	constructor(options: TemplateOptions) {
+		const placeholders = options.placeholders ?? []
+		const seenNames = new Set<string>()
+		for (const placeholder of placeholders) {
+			if (seenNames.has(placeholder.name)) {
+				throw new TemplateError('INVALID', `Duplicate placeholder name: ${placeholder.name}`, {
+					name: placeholder.name,
+				})
+			}
+			seenNames.add(placeholder.name)
+			if (Array.isArray(placeholder.path) && placeholder.path.length === 0) {
+				throw new TemplateError(
+					'INVALID',
+					`Placeholder path must not be empty: ${placeholder.name}`,
+					{ name: placeholder.name },
+				)
+			}
+		}
+
 		this.id = typeof options.id === 'string' ? options.id : crypto.randomUUID()
 		this.name = options.name
 		this.content = options.content
-		this.placeholders = options.placeholders ?? []
+		this.placeholders = placeholders
 		this.summary = options.summary
 		this.description = options.description
 		this.category = options.category
@@ -104,6 +123,19 @@ export class Template implements TemplateInterface {
 	 * Report which required placeholders would stay unresolved, and which
 	 * `values` keys go unused, without producing output.
 	 *
+	 * @remarks
+	 * Content-token driven: scans `this.content` for every `{{name}}` token
+	 * (skipping escaped `\{{` matches) the same way `fill` does, so `validate`
+	 * predicts `fill`'s `'error'`-{@link MissingPolicy} outcome exactly — a
+	 * token reported here as missing is precisely a token that would throw
+	 * under `fill(values, { missing: 'error' })`. For each distinct token
+	 * (first-appearance order, trimmed): a declared {@link TemplatePlaceholder}
+	 * sharing its `name` supplies `path` (falling back to the token split on
+	 * `.`); the value resolves via `resolveSafeField`. The token is `missing`
+	 * only when the value is unresolved AND no `fallback` is declared AND the
+	 * placeholder is required (`required !== false`, including undeclared
+	 * tokens). `extra` lists every `values` key with no declared placeholder.
+	 *
 	 * @param values - The values to check
 	 * @returns The {@link TemplateValidationResult}
 	 *
@@ -120,20 +152,28 @@ export class Template implements TemplateInterface {
 	validate(values?: TemplateFillValues): TemplateValidationResult {
 		const record = values ?? {}
 		const missing: string[] = []
+		const seen = new Set<string>()
 
-		for (const placeholder of this.placeholders) {
-			if (placeholder.required === false) continue
-			if (placeholder.fallback !== undefined) continue
+		const pattern = new RegExp(FILL_PATTERN.source, FILL_PATTERN.flags)
+		for (const match of this.content.matchAll(pattern)) {
+			const rawToken = match[1]
+			if (rawToken === undefined) continue
+			const token = rawToken.trim()
+			if (seen.has(token)) continue
+			seen.add(token)
 
-			const path = placeholder.path ?? placeholder.name
-			const segments = Array.isArray(path) ? path : [path]
-			const unsafe = segments.some((segment) => UNSAFE_FIELD_SEGMENTS.includes(segment))
-			const value = unsafe ? undefined : resolveField(record, path)
-			if (value === undefined) missing.push(placeholder.name)
+			const declared = this.placeholders.find((placeholder) => placeholder.name === token)
+			const path = declared?.path ?? token.split('.')
+			const resolved = resolveSafeField(record, path)
+
+			const required = declared === undefined || declared.required !== false
+			if (resolved === undefined && declared?.fallback === undefined && required) {
+				missing.push(token)
+			}
 		}
 
-		const declared = new Set(this.placeholders.map((placeholder) => placeholder.name))
-		const extra = Object.keys(record).filter((key) => !declared.has(key))
+		const declaredNames = new Set(this.placeholders.map((placeholder) => placeholder.name))
+		const extra = Object.keys(record).filter((key) => !declaredNames.has(key))
 
 		return { valid: missing.length === 0, missing, extra }
 	}

@@ -1,11 +1,18 @@
-import type { ContractShape } from '@orkestrel/contract'
-import type {
-	TemplateFillOptions,
-	TemplateFillValues,
-	TemplatePlaceholder,
-} from './types.js'
-import { isFiniteNumber, objectShape, optionalShape, resolveField, stringShape } from '@orkestrel/contract'
-import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY, FILL_PATTERN, UNSAFE_FIELD_SEGMENTS } from './constants.js'
+import type { ContractShape, FieldPath } from '@orkestrel/contract'
+import type { TemplateFillOptions, TemplateFillValues, TemplatePlaceholder } from './types.js'
+import {
+	isFiniteNumber,
+	objectShape,
+	optionalShape,
+	resolveField,
+	stringShape,
+} from '@orkestrel/contract'
+import {
+	DEFAULT_LOCALE,
+	DEFAULT_MISSING_POLICY,
+	FILL_PATTERN,
+	UNSAFE_FIELD_SEGMENTS,
+} from './constants.js'
 import { TemplateError } from './errors.js'
 
 // The templates pure-leaf inventory (AGENTS §5/§7) — every function here is a
@@ -20,7 +27,10 @@ import { TemplateError } from './errors.js'
  * A finite number renders with the given locale's thousand grouping (via
  * `toLocaleString`); every other value — including `null` — String-coerces.
  * `null` therefore renders as the literal string `'null'`, intentionally
- * mirroring `interpolateMessage`'s coercion parity (see `fillTemplate`).
+ * mirroring `interpolateMessage`'s coercion parity (see `fillTemplate`). An
+ * invalid BCP-47 `locale` tag throws a `RangeError` from the underlying
+ * `toLocaleString` call when `value` is a finite number — this is a caller
+ * error (an invalid locale argument), by design, and is not caught here.
  *
  * @param value - The resolved value to format
  * @param locale - The locale used for finite-number formatting
@@ -37,6 +47,38 @@ import { TemplateError } from './errors.js'
 export function formatValue(value: unknown, locale: string): string {
 	if (isFiniteNumber(value)) return value.toLocaleString(locale)
 	return String(value)
+}
+
+/**
+ * Resolve a field path against a fill-values record, refusing any path that
+ * touches a prototype-pollution-unsafe segment.
+ *
+ * @remarks
+ * A prototype-pollution guard shared by `fillTemplate` and `Template#validate`
+ * so the two stay in lockstep: `path` normalizes to a segment array (a bare
+ * string `path` becomes a single-segment array); if ANY segment appears in
+ * `UNSAFE_FIELD_SEGMENTS` (`'__proto__'`, `'constructor'`, `'prototype'`), the
+ * lookup is refused and `undefined` is returned WITHOUT ever calling
+ * `resolveField` — a path like `['__proto__', 'polluted']` can never reach
+ * the record's actual prototype chain through this function. Every other
+ * path resolves through `@orkestrel/contract`'s `resolveField`.
+ *
+ * @param record - The fill-values record to resolve against
+ * @param path - The field path — a single segment or a segment array
+ * @returns The resolved value, or `undefined` when unresolved or the path is unsafe
+ *
+ * @example
+ * ```ts
+ * import { resolveSafeField } from '@src/core'
+ *
+ * resolveSafeField({ a: { b: 1 } }, ['a', 'b']) // 1
+ * resolveSafeField({}, ['__proto__', 'polluted']) // undefined
+ * ```
+ */
+export function resolveSafeField(record: TemplateFillValues, path: FieldPath): unknown {
+	const segments = Array.isArray(path) ? path : [path]
+	if (segments.some((segment) => UNSAFE_FIELD_SEGMENTS.includes(segment))) return undefined
+	return resolveField(record, path)
 }
 
 /**
@@ -91,14 +133,13 @@ export function fillTemplate(
 	const seen = new Set<string>()
 
 	const pattern = new RegExp(FILL_PATTERN.source, FILL_PATTERN.flags)
-	const result = content.replace(pattern, (matchText: string, token: string | undefined) => {
-		if (token === undefined) return '{{'
+	const result = content.replace(pattern, (matchText: string, rawToken: string | undefined) => {
+		if (rawToken === undefined) return '{{'
+		const token = rawToken.trim()
 
 		const declared = placeholders.find((placeholder) => placeholder.name === token)
 		const path = declared?.path ?? token.split('.')
-		const segments = Array.isArray(path) ? path : [path]
-		const unsafe = segments.some((segment) => UNSAFE_FIELD_SEGMENTS.includes(segment))
-		const value = unsafe ? undefined : resolveField(record, path)
+		const value = resolveSafeField(record, path)
 
 		if (value !== undefined) return formatValue(value, locale)
 		if (declared?.fallback !== undefined) return formatValue(declared.fallback, locale)

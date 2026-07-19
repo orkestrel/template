@@ -1,11 +1,7 @@
 import type { TemplateInterface } from '@src/core'
 import { isTemplateError, Template, TemplateManager } from '@src/core'
-import { createRecorder } from '../../setup.js'
+import { captureError, createRecorder } from '../../setup.js'
 import { describe, expect, it } from 'vitest'
-
-// TemplateManager not yet exported from the @src/core barrel (index.ts) — the
-// orchestrator must add `export * from './TemplateManager.js'` to index.ts;
-// this test imports the module path directly until that patch lands.
 
 describe('TemplateManager#register', () => {
 	it('registers a TemplateOptions bag and returns the constructed instance', () => {
@@ -22,13 +18,11 @@ describe('TemplateManager#register', () => {
 		const manager = new TemplateManager()
 		manager.register({ id: 'greeting', name: 'greeting', content: 'Hi' })
 
-		try {
-			manager.register({ id: 'greeting', name: 'greeting', content: 'Hi again' })
-			expect.unreachable()
-		} catch (error) {
-			expect(isTemplateError(error)).toBe(true)
-			if (isTemplateError(error)) expect(error.code).toBe('CONFLICT')
-		}
+		const error = captureError(() =>
+			manager.register({ id: 'greeting', name: 'greeting', content: 'Hi again' }),
+		)
+
+		expect(isTemplateError(error) && error.code === 'CONFLICT').toBe(true)
 	})
 
 	it('replace: true overwrites the existing entry (old instance gone)', () => {
@@ -53,7 +47,7 @@ describe('TemplateManager#register', () => {
 		expect(instance.fill({})).toBe('Hi ')
 	})
 
-	it('keeps a pre-built TemplateInterface instance\'s own defaults untouched', () => {
+	it("keeps a pre-built TemplateInterface instance's own defaults untouched", () => {
 		const manager = new TemplateManager({ missing: 'empty' })
 		const prebuilt = new Template({
 			id: 'greeting',
@@ -84,25 +78,18 @@ describe('TemplateManager#template', () => {
 	it('throws TemplateError coded NOTFOUND for an unknown id', () => {
 		const manager = new TemplateManager()
 
-		try {
-			manager.template('missing')
-			expect.unreachable()
-		} catch (error) {
-			expect(isTemplateError(error)).toBe(true)
-			if (isTemplateError(error)) expect(error.code).toBe('NOTFOUND')
-		}
+		const error = captureError(() => manager.template('missing'))
+
+		expect(isTemplateError(error) && error.code === 'NOTFOUND').toBe(true)
 	})
 })
 
 describe('TemplateManager#templates', () => {
-	it('returns a snapshot unaffected by mutating the returned array', () => {
+	it('returns a new array identity on every call, proving copy semantics', () => {
 		const manager = new TemplateManager()
 		manager.register({ id: 'a', name: 'a', content: 'A' })
 
-		const snapshot = manager.templates()
-		snapshot.length = 0
-
-		expect(manager.templates()).toHaveLength(1)
+		expect(manager.templates()).not.toBe(manager.templates())
 	})
 
 	it('returns a snapshot unaffected by later registration', () => {
@@ -155,7 +142,12 @@ describe('TemplateManager#find', () => {
 		manager.register({ id: 'a', name: 'a', content: 'A' })
 		manager.register({ id: 'b', name: 'b', content: 'B' })
 
-		expect(manager.find().map((t) => t.id).sort()).toEqual(['a', 'b'])
+		expect(
+			manager
+				.find()
+				.map((t) => t.id)
+				.sort(),
+		).toEqual(['a', 'b'])
 	})
 })
 
@@ -327,13 +319,9 @@ describe('TemplateManager — fill/validate/parameters delegation', () => {
 	it('fill throws TemplateError coded NOTFOUND for an unknown id', () => {
 		const manager = new TemplateManager()
 
-		try {
-			manager.fill('missing')
-			expect.unreachable()
-		} catch (error) {
-			expect(isTemplateError(error)).toBe(true)
-			if (isTemplateError(error)) expect(error.code).toBe('NOTFOUND')
-		}
+		const error = captureError(() => manager.fill('missing'))
+
+		expect(isTemplateError(error) && error.code === 'NOTFOUND').toBe(true)
 	})
 
 	it('validate delegates to the stored template', () => {
@@ -351,13 +339,9 @@ describe('TemplateManager — fill/validate/parameters delegation', () => {
 	it('validate throws TemplateError coded NOTFOUND for an unknown id', () => {
 		const manager = new TemplateManager()
 
-		try {
-			manager.validate('missing')
-			expect.unreachable()
-		} catch (error) {
-			expect(isTemplateError(error)).toBe(true)
-			if (isTemplateError(error)) expect(error.code).toBe('NOTFOUND')
-		}
+		const error = captureError(() => manager.validate('missing'))
+
+		expect(isTemplateError(error) && error.code === 'NOTFOUND').toBe(true)
 	})
 
 	it('parameters delegates to the stored template', () => {
@@ -375,13 +359,9 @@ describe('TemplateManager — fill/validate/parameters delegation', () => {
 	it('parameters throws TemplateError coded NOTFOUND for an unknown id', () => {
 		const manager = new TemplateManager()
 
-		try {
-			manager.parameters('missing')
-			expect.unreachable()
-		} catch (error) {
-			expect(isTemplateError(error)).toBe(true)
-			if (isTemplateError(error)) expect(error.code).toBe('NOTFOUND')
-		}
+		const error = captureError(() => manager.parameters('missing'))
+
+		expect(isTemplateError(error) && error.code === 'NOTFOUND').toBe(true)
 	})
 
 	it('a manager-registered TemplateOptions bag inherits the manager missing default through fill', () => {
@@ -389,5 +369,48 @@ describe('TemplateManager — fill/validate/parameters delegation', () => {
 		manager.register({ id: 'a', name: 'a', content: 'Hi {{name}}' })
 
 		expect(manager.fill('a', {})).toBe('Hi ')
+	})
+})
+
+describe('TemplateManager — structural passthrough (R7)', () => {
+	it('registers a plain object implementing TemplateInterface as-is (not a Template instance)', () => {
+		const manager = new TemplateManager()
+		const plain: TemplateInterface = {
+			id: 'plain',
+			name: 'plain',
+			content: 'Hi {{name}}',
+			placeholders: [],
+			definition() {
+				return {
+					id: 'plain',
+					name: 'plain',
+					content: 'Hi {{name}}',
+					placeholders: [],
+				}
+			},
+			fill(values) {
+				return `Hi ${String(values?.name ?? '')}`
+			},
+			validate() {
+				return { valid: true, missing: [], extra: [] }
+			},
+			parameters() {
+				return undefined
+			},
+		}
+
+		const registered = manager.register(plain)
+
+		expect(registered).toBe(plain)
+		expect(manager.template('plain')).toBe(plain)
+	})
+
+	it('a TemplateOptions bag still instantiates with manager defaults', () => {
+		const manager = new TemplateManager({ missing: 'empty', locale: 'de-DE' })
+
+		const instance = manager.register({ id: 'bag', name: 'bag', content: 'Hi {{name}}' })
+
+		expect(instance).toBeInstanceOf(Template)
+		expect(instance.fill({})).toBe('Hi ')
 	})
 })

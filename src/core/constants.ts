@@ -12,12 +12,18 @@ import type { MissingPolicy } from './types.js'
  * (`\{{` — a literal backslash followed by `{{`) means "emit a literal
  * `{{`" — the escape hatch for content that must show `{{` without
  * triggering substitution. A match that instead populates capture group 1
- * (`\{{\s*([^{}]+?)\s*\}\}`) means "substitute the named token" — group 1 is
- * the trimmed placeholder name looked up against the fill values. Every call
- * site builds a fresh `RegExp` from `.source` / `.flags` rather than sharing
- * this instance's mutable `lastIndex` across scans.
+ * (`\{{([^{}]+?)\}\}`) means "substitute the named token" — group 1 is the
+ * RAW (untrimmed) token text between the braces; every call site trims it
+ * (`token.trim()`) before using it as a lookup name, so `'{{ name }}'` still
+ * resolves `'name'`. The pattern intentionally does NOT wrap the token in
+ * `\s*` — an unclosed `'{{' + ' '.repeat(n)` with no closing `}}` would
+ * otherwise force the regex engine into catastrophic backtracking over the
+ * whitespace run (O(n^2)); trimming after the match keeps the same
+ * whitespace tolerance without the backtracking hazard. Every call site
+ * builds a fresh `RegExp` from `.source` / `.flags` rather than sharing this
+ * instance's mutable `lastIndex` across scans.
  */
-export const FILL_PATTERN = /\\\{\{|\{\{\s*([^{}]+?)\s*\}\}/g
+export const FILL_PATTERN = /\\\{\{|\{\{([^{}]+?)\}\}/g
 
 /** Default `missing` policy for `Template#fill` / `TemplateManager#fill` when unspecified. */
 export const DEFAULT_MISSING_POLICY: MissingPolicy = 'error'

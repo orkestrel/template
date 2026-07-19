@@ -20,8 +20,8 @@ import type { EmitterErrorHandler, EmitterHooks, EmitterInterface } from '@orkes
  * {@link FieldPath} rather than a flat `name` lookup on the values record.
  * `required` defaults to `true` when omitted — an unresolved required
  * placeholder is governed by the active {@link MissingPolicy}. `fallback` is
- * a literal substituted when the value is unresolved and `required` is
- * `false`.
+ * a literal substituted when the value is unresolved, regardless of
+ * `required`.
  */
 export interface TemplatePlaceholder {
 	readonly name: string

@@ -1,4 +1,9 @@
-import type { TemplateInterface, TemplateManagerInterface, TemplateManagerOptions, TemplateOptions } from './types.js'
+import type {
+	TemplateInterface,
+	TemplateManagerInterface,
+	TemplateManagerOptions,
+	TemplateOptions,
+} from './types.js'
 import { Template } from './Template.js'
 import { TemplateManager } from './TemplateManager.js'
 

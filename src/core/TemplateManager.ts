@@ -147,7 +147,22 @@ export class TemplateManager implements TemplateManagerInterface {
 		return this.#templates.has(id)
 	}
 
-	// Array overload first (AGENTS §9.2); the batch form is all-or-nothing.
+	/**
+	 * Remove one, several, or every registered template (AGENTS §9.2 batch
+	 * overloads) — array overload declared first so a list resolves to the
+	 * batch form.
+	 *
+	 * @remarks
+	 * `remove()` removes every registered template, emitting `remove` once per
+	 * instance. `remove(id)` removes one template by id, emitting `remove` and
+	 * returning `true` when it existed, `false` otherwise. `remove(ids)` is
+	 * ALL-OR-NOTHING: if any id in the list is unregistered, the collection is
+	 * left untouched and `false` is returned; otherwise every listed template
+	 * is removed (each emitting `remove`) and `true` is returned.
+	 *
+	 * @param target - Omit to remove all, a single id, or a list of ids
+	 * @returns `boolean` for the single-id / list-of-ids forms; `void` for the remove-all form
+	 */
 	remove(ids: readonly string[]): boolean
 	remove(id: string): boolean
 	remove(): void
@@ -225,10 +240,17 @@ export class TemplateManager implements TemplateManagerInterface {
 		})
 	}
 
-	// A TemplateOptions bag is plain data with no `fill` method; a
-	// TemplateInterface instance always exposes one.
+	// A TemplateOptions bag is plain data with no `fill` / `validate` /
+	// `parameters` methods; a TemplateInterface instance always exposes all three.
 	#isInstance(template: TemplateInterface | TemplateOptions): template is TemplateInterface {
-		return 'fill' in template && typeof template.fill === 'function'
+		return (
+			'fill' in template &&
+			typeof template.fill === 'function' &&
+			'validate' in template &&
+			typeof template.validate === 'function' &&
+			'parameters' in template &&
+			typeof template.parameters === 'function'
+		)
 	}
 
 	#throwNotFound(id: string): never {

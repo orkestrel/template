@@ -1,6 +1,13 @@
 import type { TemplatePlaceholder } from '@src/core'
-import { fillTemplate, formatValue, isTemplateError, placeholderShape } from '@src/core'
+import {
+	fillTemplate,
+	formatValue,
+	isTemplateError,
+	placeholderShape,
+	resolveSafeField,
+} from '@src/core'
 import { createContract } from '@orkestrel/contract'
+import { captureError } from '../../setup.js'
 import { describe, expect, it } from 'vitest'
 
 // The template fill engine's pure leaves — every function is referentially
@@ -62,23 +69,22 @@ describe('fillTemplate — missing policies', () => {
 	})
 
 	it('"error" throws one TemplateError coded MISSING listing every unresolved token, in first-appearance order', () => {
-		expect(() => fillTemplate('{{a}} and {{b}} and {{a}}', {})).toThrowError()
-		try {
-			fillTemplate('{{a}} and {{b}} and {{a}}', {})
-			expect.unreachable()
-		} catch (error) {
-			expect(isTemplateError(error)).toBe(true)
-			if (isTemplateError(error)) {
-				expect(error.code).toBe('MISSING')
-				expect(error.context?.missing).toEqual(['a', 'b'])
-				expect(error.message).toContain('a')
-				expect(error.message).toContain('b')
-			}
-		}
+		expect(() => fillTemplate('{{a}} and {{b}} and {{a}}', {})).toThrowError(
+			'Missing required placeholder(s): a, b',
+		)
+
+		const error = captureError(() => fillTemplate('{{a}} and {{b}} and {{a}}', {}))
+
+		expect(isTemplateError(error) && error.code === 'MISSING').toBe(true)
+		expect(isTemplateError(error) ? error.context?.missing : undefined).toEqual(['a', 'b'])
+		expect(isTemplateError(error) ? error.message.includes('a') : false).toBe(true)
+		expect(isTemplateError(error) ? error.message.includes('b') : false).toBe(true)
 	})
 
 	it('"error" is the default policy when options are omitted', () => {
-		expect(() => fillTemplate('Hi {{name}}', {})).toThrowError()
+		expect(() => fillTemplate('Hi {{name}}', {})).toThrowError(
+			'Missing required placeholder(s): name',
+		)
 	})
 
 	it('an optional declared placeholder (required: false) never joins the "error" collection', () => {
@@ -89,9 +95,7 @@ describe('fillTemplate — missing policies', () => {
 
 describe('fillTemplate — fallback precedence', () => {
 	it('a provided value wins over a declared fallback', () => {
-		const placeholders: readonly TemplatePlaceholder[] = [
-			{ name: 'city', fallback: 'Nowhere' },
-		]
+		const placeholders: readonly TemplatePlaceholder[] = [{ name: 'city', fallback: 'Nowhere' }]
 		expect(fillTemplate('City: {{city}}', { city: 'Reno' }, { placeholders })).toBe('City: Reno')
 	})
 
@@ -176,7 +180,9 @@ describe('fillTemplate — value coercion', () => {
 
 	it('non-string values: boolean and object String-coerce', () => {
 		expect(fillTemplate('{{b}}', { b: true }, { missing: 'empty' })).toBe('true')
-		expect(fillTemplate('{{o}}', { o: { toString: () => 'obj' } }, { missing: 'empty' })).toBe('obj')
+		expect(fillTemplate('{{o}}', { o: { toString: () => 'obj' } }, { missing: 'empty' })).toBe(
+			'obj',
+		)
 	})
 })
 
@@ -213,6 +219,57 @@ describe('formatValue', () => {
 		expect(formatValue(null, 'en-US')).toBe('null')
 		expect(formatValue(undefined, 'en-US')).toBe('undefined')
 		expect(formatValue('text', 'en-US')).toBe('text')
+	})
+})
+
+describe('resolveSafeField', () => {
+	it('resolves a nested path happy path', () => {
+		expect(resolveSafeField({ a: { b: 1 } }, ['a', 'b'])).toBe(1)
+	})
+
+	it('refuses a __proto__-containing path, returning undefined', () => {
+		expect(resolveSafeField({}, ['__proto__', 'x'])).toBeUndefined()
+	})
+})
+
+describe('fillTemplate — ReDoS regression (R4)', () => {
+	it('completes quickly on an unclosed "{{" + a long whitespace run', () => {
+		const content = `{{${' '.repeat(1_000_000)}`
+		const start = Date.now()
+		const result = fillTemplate(content, { name: 'x' }, { missing: 'empty' })
+		const elapsed = Date.now() - start
+		expect(typeof result).toBe('string')
+		expect(elapsed).toBeLessThan(2000)
+	})
+})
+
+describe('fillTemplate — token trimming after match (R4)', () => {
+	it('"{{ name }}" still resolves the trimmed token "name"', () => {
+		expect(fillTemplate('Hi {{ name }}', { name: 'Ada' })).toBe('Hi Ada')
+	})
+})
+
+describe('fillTemplate — escape and unsafe-token pinning (M2/L4/L3/R5)', () => {
+	it('an escaped \\{{name}} renders the literal {{name}} (M2)', () => {
+		expect(fillTemplate('\\{{name}}', { name: 'Ada' })).toBe('{{name}}')
+	})
+
+	it('bare {{constructor}} / {{prototype}} are unresolved and Object.prototype stays clean (L4)', () => {
+		expect(fillTemplate('{{constructor}}', {}, { missing: 'empty' })).toBe('')
+		expect(fillTemplate('{{prototype}}', {}, { missing: 'empty' })).toBe('')
+		expect(Object.getOwnPropertyDescriptor(Object.prototype, 'constructor')?.value).toBe(Object)
+		expect(Object.getOwnPropertyDescriptor(Object.prototype, 'prototype')).toBeUndefined()
+	})
+
+	it('a whitespace-only {{   }} token is unresolved (L3)', () => {
+		expect(fillTemplate('{{   }}', {}, { missing: 'empty' })).toBe('')
+	})
+
+	it('required: true with a declared fallback substitutes the fallback, no throw under "error" (R5)', () => {
+		const placeholders: readonly TemplatePlaceholder[] = [
+			{ name: 'name', required: true, fallback: 'Friend' },
+		]
+		expect(fillTemplate('Hi {{name}}', {}, { placeholders, missing: 'error' })).toBe('Hi Friend')
 	})
 })
 

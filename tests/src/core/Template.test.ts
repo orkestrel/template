@@ -1,5 +1,6 @@
 import type { TemplateInterface, TemplatePlaceholder } from '@src/core'
 import { isTemplateError, Template } from '@src/core'
+import { captureError } from '../../setup.js'
 import { describe, expect, it } from 'vitest'
 
 // The Template entity — id assignment, instance defaults, fill/validate/
@@ -31,7 +32,7 @@ describe('Template — instance defaults vs per-call overrides', () => {
 	it('defaults missing to "error" when unspecified', () => {
 		const instance = new Template({ name: 'n', content: 'Hi {{name}}' })
 
-		expect(() => instance.fill({})).toThrowError()
+		expect(() => instance.fill({})).toThrowError('Missing required placeholder(s): name')
 	})
 
 	it('honors an instance-level missing default', () => {
@@ -89,13 +90,9 @@ describe('Template#fill', () => {
 	it('throws a TemplateError coded MISSING under the "error" policy', () => {
 		const instance = new Template({ name: 'n', content: '{{a}}' })
 
-		try {
-			instance.fill({})
-			expect.unreachable()
-		} catch (error) {
-			expect(isTemplateError(error)).toBe(true)
-			if (isTemplateError(error)) expect(error.code).toBe('MISSING')
-		}
+		const error = captureError(() => instance.fill({}))
+
+		expect(isTemplateError(error) && error.code === 'MISSING').toBe(true)
 	})
 })
 
@@ -177,6 +174,65 @@ describe('Template#validate', () => {
 		})
 
 		expect(instance.validate({}).missing).toEqual(['evil'])
+	})
+})
+
+describe('Template#validate — validate/fill agreement (R1)', () => {
+	it('a declared dotted name (path defaults from name split on .) resolves in both fill and validate', () => {
+		const instance = new Template({
+			name: 'greeting',
+			content: 'Hi {{user.name}}',
+			placeholders: [{ name: 'user.name' }],
+		})
+
+		expect(instance.fill({ user: { name: 'Ada' } })).toBe('Hi Ada')
+		expect(instance.validate({ user: { name: 'Ada' } }).missing).toEqual([])
+	})
+
+	it('an undeclared token in content is reported missing against empty values', () => {
+		const instance = new Template({ name: 'n', content: '{{x}}' })
+
+		const result = instance.validate({})
+		expect(result.missing).toEqual(['x'])
+		expect(result.valid).toBe(false)
+	})
+
+	it('a declared-but-unused placeholder (not present in content) is never reported missing', () => {
+		const instance = new Template({
+			name: 'n',
+			content: 'Hi there',
+			placeholders: [{ name: 'unused' }],
+		})
+
+		expect(instance.validate({}).missing).toEqual([])
+	})
+})
+
+describe('Template — constructor validation (R3)', () => {
+	it('throws TemplateError coded INVALID on duplicate placeholder names', () => {
+		const error = captureError(
+			() =>
+				new Template({
+					name: 'n',
+					content: 'Hi {{name}}',
+					placeholders: [{ name: 'name' }, { name: 'name' }],
+				}),
+		)
+
+		expect(isTemplateError(error) && error.code === 'INVALID').toBe(true)
+	})
+
+	it('throws TemplateError coded INVALID on an empty-array placeholder path', () => {
+		const error = captureError(
+			() =>
+				new Template({
+					name: 'n',
+					content: 'Hi {{name}}',
+					placeholders: [{ name: 'name', path: [] }],
+				}),
+		)
+
+		expect(isTemplateError(error) && error.code === 'INVALID').toBe(true)
 	})
 })
 

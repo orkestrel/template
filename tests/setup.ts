@@ -37,3 +37,22 @@ export function createRecorder<TArgs extends readonly unknown[]>(): TestRecorder
 		},
 	}
 }
+
+/**
+ * Run `thunk` and return the value it threw, or `undefined` if it returned normally — the
+ * one shared form of the `try { …; return undefined } catch (error) { return error }` IIFE
+ * the error-path tests repeat (AGENTS §16.1). Lets a caller assert on the captured fault
+ * unconditionally, never inside a conditional `expect`. For a synchronous throw site; an
+ * async rejection is asserted with `await expect(…).rejects` instead.
+ *
+ * @param thunk - The (synchronous) operation to run and capture the throw of
+ * @returns The thrown value, or `undefined` when `thunk` did not throw
+ */
+export function captureError(thunk: () => unknown): unknown {
+	try {
+		thunk()
+		return undefined
+	} catch (error) {
+		return error
+	}
+}
