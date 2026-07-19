@@ -16,6 +16,16 @@ A dual-axis index into this repository's guides — by concept, and by directory
 
 ## Dependency reference
 
+[`src/contract.md`](src/contract.md) is a byte-identical mirror of the guide
+for `@orkestrel/contract` — a runtime dependency. It documents **that
+package's** surface (guards, combinators, parsers, and the shape DSL), not
+anything sourced in this repo; it is kept here for the same reason.
+
+[`src/emitter.md`](src/emitter.md) is a byte-identical mirror of the guide
+for `@orkestrel/emitter` — a runtime dependency. It documents **that
+package's** surface (the typed push-observation `Emitter`), not anything
+sourced in this repo; it is kept here for the same reason.
+
 [`src/guide.md`](src/guide.md) is a byte-identical mirror of the guide for
 `@orkestrel/guide` — the devDependency powering this repo's guides-parity test
 suite (`tests/guides/src/parity.test.ts`). It documents **that package's**
