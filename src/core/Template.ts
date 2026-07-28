@@ -65,10 +65,10 @@ export class Template implements TemplateInterface {
 		this.name = options.name
 		this.content = options.content
 		this.placeholders = placeholders
-		this.summary = options.summary
-		this.description = options.description
-		this.category = options.category
-		this.tags = options.tags
+		if (options.summary !== undefined) this.summary = options.summary
+		if (options.description !== undefined) this.description = options.description
+		if (options.category !== undefined) this.category = options.category
+		if (options.tags !== undefined) this.tags = options.tags
 		this.#missing = options.missing ?? DEFAULT_MISSING_POLICY
 		this.#locale = options.locale ?? DEFAULT_LOCALE
 		this.#contract = createContract(placeholderShape(this.placeholders))
@@ -91,10 +91,10 @@ export class Template implements TemplateInterface {
 			name: this.name,
 			content: this.content,
 			placeholders: this.placeholders,
-			summary: this.summary,
-			description: this.description,
-			category: this.category,
-			tags: this.tags,
+			...(this.summary !== undefined ? { summary: this.summary } : {}),
+			...(this.description !== undefined ? { description: this.description } : {}),
+			...(this.category !== undefined ? { category: this.category } : {}),
+			...(this.tags !== undefined ? { tags: this.tags } : {}),
 		}
 	}
 

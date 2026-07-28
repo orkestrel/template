@@ -189,7 +189,10 @@ export function fillTemplate(
 export function placeholderShape(placeholders: readonly TemplatePlaceholder[]): ContractShape {
 	const properties: Record<string, ContractShape> = {}
 	for (const placeholder of placeholders) {
-		const field = stringShape({ description: placeholder.description })
+		const description = placeholder.description
+		const field = stringShape({
+			...(description !== undefined ? { description } : {}),
+		})
 		properties[placeholder.name] = placeholder.required === false ? optionalShape(field) : field
 	}
 	return objectShape(properties)

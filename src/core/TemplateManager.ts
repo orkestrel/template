@@ -50,7 +50,12 @@ export class TemplateManager implements TemplateManagerInterface {
 	readonly #locale: string
 
 	constructor(options?: TemplateManagerOptions) {
-		this.#emitter = new Emitter<TemplateManagerEventMap>({ on: options?.on, error: options?.error })
+		const on = options?.on
+		const error = options?.error
+		this.#emitter = new Emitter<TemplateManagerEventMap>({
+			...(on !== undefined ? { on } : {}),
+			...(error !== undefined ? { error } : {}),
+		})
 		this.#missing = options?.missing ?? DEFAULT_MISSING_POLICY
 		this.#locale = options?.locale ?? DEFAULT_LOCALE
 		for (const template of options?.templates ?? []) {
