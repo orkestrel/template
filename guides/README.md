@@ -6,27 +6,27 @@ A dual-axis index into this repository's guides — by concept, and by directory
 
 | Concept  | Spec                                 | Source                    | Tests                                 |
 | -------- | ------------------------------------ | ------------------------- | ------------------------------------- |
-| Template | [`src/template.md`](src/template.md) | [`src/core`](../src/core) | [`tests/src/core`](../tests/src/core) |
+| Template | [`template.md`](template.md) | [`src/core`](../src/core) | [`tests/src/core`](../tests/src/core) |
 
 ## By directory
 
 | Directory  | Guide                                |
 | ---------- | ------------------------------------ |
-| `src/core` | [`src/template.md`](src/template.md) |
+| `src/core` | [`template.md`](template.md) |
 
 ## Dependency reference
 
-[`src/contract.md`](src/contract.md) is a byte-identical mirror of the guide
+[`contract.md`](contract.md) is a byte-identical mirror of the guide
 for `@orkestrel/contract` — a runtime dependency. It documents **that
 package's** surface (guards, combinators, parsers, and the shape DSL), not
 anything sourced in this repo; it is kept here for the same reason.
 
-[`src/emitter.md`](src/emitter.md) is a byte-identical mirror of the guide
+[`emitter.md`](emitter.md) is a byte-identical mirror of the guide
 for `@orkestrel/emitter` — a runtime dependency. It documents **that
 package's** surface (the typed push-observation `Emitter`), not anything
 sourced in this repo; it is kept here for the same reason.
 
-[`src/guide.md`](src/guide.md) is a byte-identical mirror of the guide for
+[`guide.md`](guide.md) is a byte-identical mirror of the guide for
 `@orkestrel/guide` — the devDependency powering this repo's guides-parity test
 suite (`tests/guides.test.ts`). It documents **that package's**
 surface (`Guide` / `Source`, the manifest and comparison helpers), not anything
