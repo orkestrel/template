@@ -161,7 +161,7 @@ export type TemplateManagerEventMap = {
  * listener-error handler.
  */
 export interface TemplateManagerOptions {
-	readonly templates?: readonly (TemplateInterface | TemplateOptions)[]
+	readonly templates?: ReadonlyArray<TemplateInterface | TemplateOptions>
 	readonly missing?: MissingPolicy
 	readonly locale?: string
 	readonly on?: EmitterHooks<TemplateManagerEventMap>
