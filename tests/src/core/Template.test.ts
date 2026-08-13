@@ -1,6 +1,6 @@
 import type { TemplateInterface, TemplatePlaceholder } from '@src/core'
 import { isTemplateError, Template } from '@src/core'
-import { captureError } from '../../setup.js'
+import { captureError } from '@orkestrel/test'
 import { describe, expect, it } from 'vitest'
 
 // The Template entity — id assignment, instance defaults, fill/validate/

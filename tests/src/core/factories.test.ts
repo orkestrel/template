@@ -1,6 +1,6 @@
 import type { TemplateInterface, TemplateManagerInterface } from '@src/core'
 import { createTemplate, createTemplateManager, Template, TemplateManager } from '@src/core'
-import { createRecorder } from '../../setup.js'
+import { createRecorder } from '@orkestrel/test'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
 // The Template / TemplateManager factories — that createTemplate / createTemplateManager

@@ -1,6 +1,6 @@
 import type { TemplateInterface } from '@src/core'
 import { isTemplateError, Template, TemplateManager } from '@src/core'
-import { captureError, createRecorder } from '../../setup.js'
+import { captureError, createRecorder } from '@orkestrel/test'
 import { describe, expect, it } from 'vitest'
 
 describe('TemplateManager#register', () => {

@@ -7,7 +7,7 @@ import {
 	resolveSafeField,
 } from '@src/core'
 import { createContract } from '@orkestrel/contract'
-import { captureError } from '../../setup.js'
+import { captureError } from '@orkestrel/test'
 import { describe, expect, it } from 'vitest'
 
 // The template fill engine's pure leaves — every function is referentially
