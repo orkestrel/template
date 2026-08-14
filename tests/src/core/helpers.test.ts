@@ -69,7 +69,7 @@ describe('fillTemplate — missing policies', () => {
 	})
 
 	it('"error" throws one TemplateError coded MISSING listing every unresolved token, in first-appearance order', () => {
-		expect(() => fillTemplate('{{a}} and {{b}} and {{a}}', {})).toThrowError(
+		expect(() => fillTemplate('{{a}} and {{b}} and {{a}}', {})).toThrow(
 			'Missing required placeholder(s): a, b',
 		)
 
@@ -82,9 +82,7 @@ describe('fillTemplate — missing policies', () => {
 	})
 
 	it('"error" is the default policy when options are omitted', () => {
-		expect(() => fillTemplate('Hi {{name}}', {})).toThrowError(
-			'Missing required placeholder(s): name',
-		)
+		expect(() => fillTemplate('Hi {{name}}', {})).toThrow('Missing required placeholder(s): name')
 	})
 
 	it('an optional declared placeholder (required: false) never joins the "error" collection', () => {

@@ -32,7 +32,7 @@ describe('Template — instance defaults vs per-call overrides', () => {
 	it('defaults missing to "error" when unspecified', () => {
 		const instance = new Template({ name: 'n', content: 'Hi {{name}}' })
 
-		expect(() => instance.fill({})).toThrowError('Missing required placeholder(s): name')
+		expect(() => instance.fill({})).toThrow('Missing required placeholder(s): name')
 	})
 
 	it('honors an instance-level missing default', () => {
