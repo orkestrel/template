@@ -1,6 +1,6 @@
 {
 	"name": "@orkestrel/template",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"description": "Stateful template registry and filler with typed placeholders. Part of the @orkestrel line.",
 	"keywords": [
 		"template",
@@ -61,7 +61,7 @@
 		"prepublishOnly": "npm run format:check && npm run lint:check && npm run check && npm run build && npm test"
 	},
 	"dependencies": {
-		"@orkestrel/contract": "^0.0.12",
+		"@orkestrel/contract": "^0.0.13",
 		"@orkestrel/emitter": "^0.0.7"
 	},
 	"devDependencies": {
