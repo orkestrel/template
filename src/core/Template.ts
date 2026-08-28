@@ -11,7 +11,8 @@ import type {
 } from './types.js'
 import { createContract, schemaToParameters } from '@orkestrel/contract'
 import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY, FILL_PATTERN } from './constants.js'
-import { fillTemplate, placeholderShape, resolveSafeField } from './helpers.js'
+import { fillTemplate, resolveToken } from './helpers.js'
+import { placeholderShape } from './shapers.js'
 import { TemplateError } from './errors.js'
 
 /**
@@ -30,6 +31,9 @@ import { TemplateError } from './errors.js'
  * ```
  */
 export class Template implements TemplateInterface {
+	readonly #missing: MissingPolicy
+	readonly #locale: string
+	readonly #contract: ContractInterface<unknown>
 	readonly id: string
 	readonly name: string
 	readonly content: string
@@ -38,9 +42,6 @@ export class Template implements TemplateInterface {
 	readonly description?: string
 	readonly category?: string
 	readonly tags?: readonly string[]
-	readonly #missing: MissingPolicy
-	readonly #locale: string
-	readonly #contract: ContractInterface<unknown>
 
 	constructor(options: TemplateOptions) {
 		const placeholders = options.placeholders ?? []
@@ -129,9 +130,10 @@ export class Template implements TemplateInterface {
 	 * predicts `fill`'s `'error'`-{@link MissingPolicy} outcome exactly — a
 	 * token reported here as missing is precisely a token that would throw
 	 * under `fill(values, { missing: 'error' })`. For each distinct token
-	 * (first-appearance order, trimmed): a declared {@link TemplatePlaceholder}
+	 * (first-appearance order, trimmed): `resolveToken` applies the one shared
+	 * token rule `fill` also applies — a declared {@link TemplatePlaceholder}
 	 * sharing its `name` supplies `path` (falling back to the token split on
-	 * `.`); the value resolves via `resolveSafeField`. The token is `missing`
+	 * `.`), and the value resolves via `resolveSafeField`. The token is `missing`
 	 * only when the value is unresolved AND no `fallback` is declared AND the
 	 * placeholder is required (`required !== false`, including undeclared
 	 * tokens). `extra` lists every `values` key with no declared placeholder.
@@ -162,12 +164,9 @@ export class Template implements TemplateInterface {
 			if (seen.has(token)) continue
 			seen.add(token)
 
-			const declared = this.placeholders.find((placeholder) => placeholder.name === token)
-			const path = declared?.path ?? token.split('.')
-			const resolved = resolveSafeField(record, path)
+			const { value, declared, required } = resolveToken(record, this.placeholders, token)
 
-			const required = declared === undefined || declared.required !== false
-			if (resolved === undefined && declared?.fallback === undefined && required) {
+			if (value === undefined && declared?.fallback === undefined && required) {
 				missing.push(token)
 			}
 		}

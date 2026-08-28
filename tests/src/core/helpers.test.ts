@@ -1,12 +1,12 @@
 import type { TemplatePlaceholder } from '@src/core'
 import {
+	createTemplate,
 	fillTemplate,
 	formatValue,
 	isTemplateError,
-	placeholderShape,
 	resolveSafeField,
+	resolveToken,
 } from '@src/core'
-import { createContract } from '@orkestrel/contract'
 import { captureError } from '@orkestrel/test'
 import { describe, expect, it } from 'vitest'
 
@@ -271,20 +271,61 @@ describe('fillTemplate — escape and unsafe-token pinning (M2/L4/L3/R5)', () =>
 	})
 })
 
-describe('placeholderShape', () => {
-	it('builds a contract shape where required placeholders are required and optional ones are not', () => {
-		const placeholders: readonly TemplatePlaceholder[] = [
-			{ name: 'city', description: 'The city' },
-			{ name: 'nickname', required: false },
-		]
-		const contract = createContract(placeholderShape(placeholders))
-		expect(contract.schema.required).toContain('city')
-		expect(contract.schema.required ?? []).not.toContain('nickname')
-		expect(contract.schema.properties?.city?.description).toBe('The city')
+describe('resolveToken', () => {
+	it('resolves an undeclared token by splitting it on "." and marks it required', () => {
+		expect(resolveToken({ name: 'Ada' }, [], 'name')).toEqual({
+			value: 'Ada',
+			declared: undefined,
+			required: true,
+		})
+		expect(resolveToken({ address: { city: 'Reno' } }, [], 'address.city').value).toBe('Reno')
 	})
 
-	it('builds an empty object shape for no placeholders', () => {
-		const contract = createContract(placeholderShape([]))
-		expect(contract.schema.required ?? []).toEqual([])
+	it('prefers a declared placeholder.path over the token-split default', () => {
+		const declared: TemplatePlaceholder = { name: 'town', path: ['address', 'city'] }
+		expect(resolveToken({ address: { city: 'Reno' } }, [declared], 'town')).toEqual({
+			value: 'Reno',
+			declared,
+			required: true,
+		})
+	})
+
+	it('reports required false only for a declared placeholder carrying required: false', () => {
+		const optional: TemplatePlaceholder = { name: 'nickname', required: false }
+		const explicit: TemplatePlaceholder = { name: 'city', required: true }
+		expect(resolveToken({}, [optional], 'nickname').required).toBe(false)
+		expect(resolveToken({}, [explicit], 'city').required).toBe(true)
+		expect(resolveToken({}, [], 'city').required).toBe(true)
+	})
+
+	it('leaves a declared fallback on `declared` rather than applying it to `value`', () => {
+		const declared: TemplatePlaceholder = { name: 'city', fallback: 'Nowhere' }
+		const resolution = resolveToken({}, [declared], 'city')
+		expect(resolution.value).toBeUndefined()
+		expect(resolution.declared?.fallback).toBe('Nowhere')
+	})
+
+	it('refuses an unsafe path segment, resolving to undefined', () => {
+		expect(resolveToken({}, [], '__proto__.polluted').value).toBeUndefined()
+		const declared: TemplatePlaceholder = { name: 'evil', path: ['constructor', 'prototype'] }
+		expect(resolveToken({}, [declared], 'evil').value).toBeUndefined()
+	})
+
+	it('is deterministic across repeated calls', () => {
+		const placeholders: readonly TemplatePlaceholder[] = [{ name: 'city' }]
+		const values = { city: 'Reno' }
+		expect(resolveToken(values, placeholders, 'city')).toEqual(
+			resolveToken(values, placeholders, 'city'),
+		)
+	})
+
+	it('answers the same rule fillTemplate and Template#validate both apply', () => {
+		const placeholders: readonly TemplatePlaceholder[] = [{ name: 'city' }]
+		const instance = createTemplate({ name: 'card', content: 'City: {{city}}', placeholders })
+		expect(resolveToken({}, placeholders, 'city').required).toBe(true)
+		expect(instance.validate({}).missing).toEqual(['city'])
+		expect(() => fillTemplate('City: {{city}}', {}, { placeholders })).toThrow(
+			'Missing required placeholder(s): city',
+		)
 	})
 })

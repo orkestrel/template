@@ -1,12 +1,11 @@
-import type { ContractShape, FieldPath } from '@orkestrel/contract'
-import type { TemplateFillOptions, TemplateFillValues, TemplatePlaceholder } from './types.js'
-import {
-	isFiniteNumber,
-	objectShape,
-	optionalShape,
-	resolveField,
-	stringShape,
-} from '@orkestrel/contract'
+import type { FieldPath } from '@orkestrel/contract'
+import type {
+	TemplateFillContext,
+	TemplateFillValues,
+	TemplatePlaceholder,
+	TemplateTokenResolution,
+} from './types.js'
+import { isFiniteNumber, resolveField } from '@orkestrel/contract'
 import {
 	DEFAULT_LOCALE,
 	DEFAULT_MISSING_POLICY,
@@ -82,12 +81,57 @@ export function resolveSafeField(record: TemplateFillValues, path: FieldPath): u
 }
 
 /**
+ * Resolves one `{{name}}` token against the declared placeholders and the
+ * fill-values record.
+ *
+ * @remarks
+ * The single implementation of the token rule `fillTemplate` and
+ * `Template#validate` both apply, so the two can never drift: the declared
+ * {@link TemplatePlaceholder} sharing the token's `name` (exact match)
+ * supplies its `path`, falling back to the token split on `.`; the value
+ * resolves through `resolveSafeField`, so any segment in
+ * `UNSAFE_FIELD_SEGMENTS` yields `undefined` without ever calling
+ * `resolveField`; `required` is `true` for an undeclared token and for a
+ * declared placeholder whose `required` is not `false`. The token is passed
+ * already trimmed. `fallback` is not applied here — it is read from
+ * `declared` by each caller, because `fill` substitutes it and `validate`
+ * only counts it.
+ *
+ * @param record - The fill-values record the token resolves against
+ * @param placeholders - The declared placeholders the token matches by name
+ * @param token - The trimmed token text, without its `{{` / `}}` delimiters
+ * @returns The {@link TemplateTokenResolution} for the token
+ *
+ * @example
+ * ```ts
+ * import { resolveToken } from '@src/core'
+ *
+ * resolveToken({ name: 'Ada' }, [], 'name').value // 'Ada'
+ * resolveToken({}, [{ name: 'nickname', required: false }], 'nickname').required // false
+ * ```
+ */
+export function resolveToken(
+	record: TemplateFillValues,
+	placeholders: readonly TemplatePlaceholder[],
+	token: string,
+): TemplateTokenResolution {
+	const declared = placeholders.find((placeholder) => placeholder.name === token)
+	const path = declared?.path ?? token.split('.')
+	return {
+		value: resolveSafeField(record, path),
+		declared,
+		required: declared === undefined || declared.required !== false,
+	}
+}
+
+/**
  * Substitute every `{{name}}` token in `content` in a single pass.
  *
  * @remarks
  * Uses a fresh `RegExp` clone of `FILL_PATTERN` per call (never sharing its
  * `lastIndex`) and a single `String#replace` scan — substituted output is
- * never re-scanned. For each token: the matching declared
+ * never re-scanned. Each token resolves through `resolveToken`, the one rule
+ * `Template#validate` also applies: the matching declared
  * {@link TemplatePlaceholder} (exact `name`) supplies its `path` (falling
  * back to the token split on `.`); ANY path segment in `UNSAFE_FIELD_SEGMENTS`
  * makes the token unresolved without ever calling `resolveField` (a
@@ -122,7 +166,7 @@ export function resolveSafeField(record: TemplateFillValues, path: FieldPath): u
 export function fillTemplate(
 	content: string,
 	values?: TemplateFillValues,
-	options?: TemplateFillOptions & { readonly placeholders?: readonly TemplatePlaceholder[] },
+	options?: TemplateFillContext,
 ): string {
 	const placeholders = options?.placeholders ?? []
 	const missing = options?.missing ?? DEFAULT_MISSING_POLICY
@@ -137,9 +181,7 @@ export function fillTemplate(
 		if (rawToken === undefined) return '{{'
 		const token = rawToken.trim()
 
-		const declared = placeholders.find((placeholder) => placeholder.name === token)
-		const path = declared?.path ?? token.split('.')
-		const value = resolveSafeField(record, path)
+		const { value, declared, required } = resolveToken(record, placeholders, token)
 
 		if (value !== undefined) return formatValue(value, locale)
 		if (declared?.fallback !== undefined) return formatValue(declared.fallback, locale)
@@ -147,7 +189,6 @@ export function fillTemplate(
 		if (missing === 'literal') return matchText
 		if (missing === 'empty') return ''
 
-		const required = declared === undefined || declared.required !== false
 		if (required && !seen.has(token)) {
 			seen.add(token)
 			missingNames.push(token)
@@ -164,36 +205,4 @@ export function fillTemplate(
 	}
 
 	return result
-}
-
-/**
- * Build the `@orkestrel/contract` object shape describing a template's
- * declared placeholders.
- *
- * @remarks
- * Each placeholder becomes a `stringShape` carrying its `description`;
- * `required === false` wraps it in `optionalShape`. Used by `Template` to
- * compile its `parameters()` contract once per instance.
- *
- * @param placeholders - The declared placeholders to shape
- * @returns The contract shape for `createContract`
- *
- * @example
- * ```ts
- * import { placeholderShape } from '@src/core'
- * import { createContract } from '@orkestrel/contract'
- *
- * const contract = createContract(placeholderShape([{ name: 'city' }]))
- * ```
- */
-export function placeholderShape(placeholders: readonly TemplatePlaceholder[]): ContractShape {
-	const properties: Record<string, ContractShape> = {}
-	for (const placeholder of placeholders) {
-		const description = placeholder.description
-		const field = stringShape({
-			...(description !== undefined ? { description } : {}),
-		})
-		properties[placeholder.name] = placeholder.required === false ? optionalShape(field) : field
-	}
-	return objectShape(properties)
 }

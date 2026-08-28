@@ -71,6 +71,39 @@ export interface TemplateFillOptions {
 	readonly locale?: string
 }
 
+/**
+ * The full option bag `fillTemplate` takes — the per-call
+ * {@link TemplateFillOptions} plus the declared placeholders tokens resolve
+ * against.
+ *
+ * @remarks
+ * `Template#fill` supplies `placeholders` from its own declaration; a direct
+ * `fillTemplate` caller supplies them per call, and omitting them fills
+ * against undeclared tokens alone.
+ */
+export interface TemplateFillContext extends TemplateFillOptions {
+	readonly placeholders?: readonly TemplatePlaceholder[]
+}
+
+/**
+ * One `{{name}}` token's resolution — the single token rule `fillTemplate`
+ * and `TemplateInterface#validate` share.
+ *
+ * @remarks
+ * `value` is the resolved fill value, `undefined` when the path is
+ * unresolved or refused by the prototype-pollution guard. `declared` is the
+ * matching {@link TemplatePlaceholder}, `undefined` for an undeclared token.
+ * `required` is `true` for an undeclared token and for a declared
+ * placeholder whose `required` is not `false`. A declared `fallback` is left
+ * on `declared` rather than applied here, because `fill` substitutes it and
+ * `validate` only counts it.
+ */
+export interface TemplateTokenResolution {
+	readonly value: unknown
+	readonly declared: TemplatePlaceholder | undefined
+	readonly required: boolean
+}
+
 /** The outcome of `TemplateInterface#validate` — which required placeholders are unresolved, and which supplied values are unused. */
 export interface TemplateValidationResult {
 	readonly valid: boolean
@@ -97,6 +130,17 @@ export interface TemplateOptions {
 	readonly tags?: readonly string[]
 	readonly missing?: MissingPolicy
 	readonly locale?: string
+}
+
+/**
+ * Options for `TemplateManagerInterface#register`.
+ *
+ * @remarks
+ * `replace` overwrites an existing entry sharing the registered id instead of
+ * throwing a {@link TemplateError} coded `CONFLICT`.
+ */
+export interface TemplateRegisterOptions {
+	readonly replace?: boolean
 }
 
 /** A query for `TemplateManagerInterface#find` — every supplied field must match. */
@@ -185,7 +229,7 @@ export interface TemplateManagerInterface {
 	readonly size: number
 	register(
 		template: TemplateInterface | TemplateOptions,
-		options?: { readonly replace?: boolean },
+		options?: TemplateRegisterOptions,
 	): TemplateInterface
 	template(id: string): TemplateInterface
 	templates(): readonly TemplateInterface[]

@@ -8,6 +8,7 @@ import type {
 	TemplateManagerOptions,
 	TemplateOptions,
 	TemplateQuery,
+	TemplateRegisterOptions,
 	TemplateValidationResult,
 } from './types.js'
 import type { EmitterInterface } from '@orkestrel/emitter'
@@ -89,7 +90,7 @@ export class TemplateManager implements TemplateManagerInterface {
 	 */
 	register(
 		template: TemplateInterface | TemplateOptions,
-		options?: { readonly replace?: boolean },
+		options?: TemplateRegisterOptions,
 	): TemplateInterface {
 		const instance = this.#instantiate(template)
 		const existing = this.#templates.get(instance.id)

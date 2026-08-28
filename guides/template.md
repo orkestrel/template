@@ -41,6 +41,9 @@ escaped `\{{` always emits a literal `{{`, regardless of policy.
 | `TemplatePlaceholder`      | interface | `{ name, path?, required?, fallback?, description? }` — one declared `{{name}}` token's lookup rule.                                                                       |
 | `TemplateDefinition`       | interface | `{ id, name, content, placeholders, summary?, description?, category?, tags? }` — a template's plain data.                                                                 |
 | `TemplateFillOptions`      | interface | `{ missing?, locale? }` — per-call overrides for `fill` / `validate`.                                                                                                      |
+| `TemplateFillContext`      | interface | `{ missing?, locale?, placeholders? }` — `fillTemplate`'s full option bag: `TemplateFillOptions` plus the declared placeholders.                                           |
+| `TemplateTokenResolution`  | interface | `{ value, declared, required }` — one `{{name}}` token's resolution, the rule `fillTemplate` and `validate` share.                                                         |
+| `TemplateRegisterOptions`  | interface | `{ replace? }` — `TemplateManagerInterface#register` options; `replace` overwrites instead of throwing `CONFLICT`.                                                         |
 | `TemplateValidationResult` | interface | `{ valid, missing, extra }` — which required placeholders are unresolved, and which supplied values unused.                                                                |
 | `TemplateOptions`          | interface | `{ id?, name, content, placeholders?, summary?, description?, category?, tags?, missing?, locale? }` — input to `createTemplate`.                                          |
 | `TemplateQuery`            | interface | `{ name?, category?, tag? }` — a `TemplateManagerInterface#find` filter; every supplied field must match.                                                                  |
@@ -97,18 +100,34 @@ transparent leaves behind `Template#fill` / `#validate`.
 | ------------------ | -------- | ------------------------------------------------------------------------------------------------------------ |
 | `formatValue`      | function | Format a resolved fill value — finite numbers get locale thousands grouping, everything else String-coerces. |
 | `resolveSafeField` | function | Resolve a field path against a values record, refusing any path touching an unsafe segment.                  |
+| `resolveToken`     | function | Resolve one `{{name}}` token — the single rule `fillTemplate` and `validate` both apply.                     |
 | `fillTemplate`     | function | Substitute every `{{name}}` token in `content` against `values`, in a single pass.                           |
-| `placeholderShape` | function | Build the `@orkestrel/contract` object shape describing a template's declared placeholders.                  |
 
 ```ts
-import { fillTemplate, formatValue, placeholderShape, resolveSafeField } from '@orkestrel/template'
+import { fillTemplate, formatValue, resolveSafeField, resolveToken } from '@orkestrel/template'
 
 formatValue(5010, 'en-US') // '5,010'
 formatValue(null, 'en-US') // 'null'
 resolveSafeField({ a: { b: 1 } }, ['a', 'b']) // 1
 resolveSafeField({}, ['__proto__', 'polluted']) // undefined
+resolveToken({ name: 'Ada' }, [], 'name').value // 'Ada'
+resolveToken({}, [{ name: 'nickname', required: false }], 'nickname').required // false
 fillTemplate('Hi {{name}}', { name: 'Ada' }) // 'Hi Ada'
 fillTemplate('Limit {{limit}}', { limit: 5010 }, { missing: 'empty' }) // 'Limit 5,010'
+```
+
+### Shapers
+
+The `@orkestrel/contract` shape values built from declared template data —
+above the helper leaves, consuming them and never consumed by them.
+
+| API                | Kind     | Summary                                                                                     |
+| ------------------ | -------- | ------------------------------------------------------------------------------------------- |
+| `placeholderShape` | function | Build the `@orkestrel/contract` object shape describing a template's declared placeholders. |
+
+```ts
+import { placeholderShape } from '@orkestrel/template'
+
 placeholderShape([{ name: 'city' }]) // an object ContractShape with a `city` string field
 ```
 
@@ -220,9 +239,11 @@ templates.clear()
   `createTemplate` / `createTemplateManager` return working instances backed
   by real `Template` / `TemplateManager`.
 - [`tests/src/core/helpers.test.ts`](../tests/src/core/helpers.test.ts) —
-  `formatValue` / `resolveSafeField` / `fillTemplate` / `placeholderShape`,
+  `formatValue` / `resolveSafeField` / `resolveToken` / `fillTemplate`,
   including the `interpolateMessage` parity and known divergence, missing
   policies, fallback precedence, and prototype-pollution-unsafe paths.
+- [`tests/src/core/shapers.test.ts`](../tests/src/core/shapers.test.ts) —
+  `placeholderShape` over required, optional, and described placeholders.
 
 ## See also
 
