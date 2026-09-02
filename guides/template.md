@@ -194,7 +194,9 @@ greeting.parameters() // the compiled parameters record, or undefined
 The self-owning, id-keyed registry over templates (AGENTS §9). `register`
 accepts a constructed `TemplateInterface` or a plain `TemplateOptions` bag,
 throwing a `TemplateError` coded `CONFLICT` on a duplicate id unless
-`options.replace` is `true`. `remove`'s array form is all-or-nothing. The
+`options.replace` is `true`. `remove`'s array form applies to every entry it
+can and reports `true` only when all of them succeeded, so one absent id
+turns the batch's answer `false` while the present ids still remove. The
 `template` accessor returns `undefined` for an unknown id; `fill` /
 `validate` / `parameters` throw `TemplateError` coded `NOTFOUND` for one,
 because each needs a template to proceed.
@@ -235,7 +237,7 @@ templates.clear()
 - [`tests/src/core/TemplateManager.test.ts`](../tests/src/core/TemplateManager.test.ts) —
   `register` / `template` / `templates` / `find` / `has` / `remove` / `clear` /
   `fill` / `validate` / `parameters`, including the `CONFLICT` / `NOTFOUND`
-  error paths and the all-or-nothing batch `remove`.
+  error paths and the apply-each-and-report batch `remove`.
 - [`tests/src/core/factories.test.ts`](../tests/src/core/factories.test.ts) —
   `createTemplate` / `createTemplateManager` return working instances backed
   by real `Template` / `TemplateManager`.

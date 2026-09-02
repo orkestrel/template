@@ -191,12 +191,15 @@ describe('TemplateManager#remove', () => {
 		expect(manager.remove('missing')).toBe(false)
 	})
 
-	it('remove(ids[]) is all-or-nothing: any missing id leaves the collection untouched', () => {
+	it('remove(ids[]) removes every present id and reports false when one is missing', () => {
 		const manager = new TemplateManager()
 		manager.register({ id: 'a', name: 'a', content: 'A' })
+		const recorder = createRecorder<[template: TemplateInterface]>()
+		manager.emitter.on('remove', recorder.handler)
 
 		expect(manager.remove(['a', 'missing'])).toBe(false)
-		expect(manager.has('a')).toBe(true)
+		expect(manager.has('a')).toBe(false)
+		expect(recorder.count).toBe(1)
 	})
 
 	it('remove(ids[]) removes every listed id and returns true when all present', () => {
@@ -243,7 +246,7 @@ describe('TemplateManager#remove', () => {
 		expect(recorder.count).toBe(2)
 	})
 
-	it('does not emit remove when the batch remove fails (missing id)', () => {
+	it('emits remove for each present id when the batch remove reports false (missing id)', () => {
 		const manager = new TemplateManager()
 		manager.register({ id: 'a', name: 'a', content: 'A' })
 		const recorder = createRecorder<[template: TemplateInterface]>()
@@ -251,7 +254,7 @@ describe('TemplateManager#remove', () => {
 
 		manager.remove(['a', 'missing'])
 
-		expect(recorder.count).toBe(0)
+		expect(recorder.count).toBe(1)
 	})
 
 	it('emits remove once per registered template for remove()', () => {

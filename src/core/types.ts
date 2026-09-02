@@ -223,8 +223,8 @@ export interface TemplateManagerOptions {
  * `options.replace` is `true`. `template` returns `undefined` for an unknown
  * id; `fill`, `validate`, and `parameters` throw `NOTFOUND` for one, because
  * each needs a template to proceed. `remove()` removes every registered
- * template. `remove`'s batch form is all-or-nothing: any missing id in the
- * list leaves the collection untouched and returns `false`.
+ * template. `remove`'s batch form removes every present id and reports
+ * `true` only when all listed ids were present.
  */
 export interface TemplateManagerInterface {
 	readonly emitter: EmitterInterface<TemplateManagerEventMap>

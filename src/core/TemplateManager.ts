@@ -32,8 +32,8 @@ import { Template } from './Template.js'
  * unless `options.replace` is `true`, in which case the existing entry is
  * overwritten. `options.templates` SEEDS the registry at construction
  * WITHOUT emitting `register` — only calls to `register` after construction
- * emit. The batch `remove(ids)` form is ALL-OR-NOTHING: any id absent from
- * the registry leaves the collection untouched and returns `false`.
+ * emit. The batch `remove(ids)` form removes every present id and returns
+ * `true` only when every listed id was present.
  *
  * @example
  * ```ts
@@ -158,10 +158,10 @@ export class TemplateManager implements TemplateManagerInterface {
 	 * @remarks
 	 * `remove()` removes every registered template, emitting `remove` once per
 	 * instance. `remove(id)` removes one template by id, emitting `remove` and
-	 * returning `true` when it existed, `false` otherwise. `remove(ids)` is
-	 * ALL-OR-NOTHING: if any id in the list is unregistered, the collection is
-	 * left untouched and `false` is returned; otherwise every listed template
-	 * is removed (each emitting `remove`) and `true` is returned.
+	 * returning `true` when it existed, `false` otherwise. `remove(ids)`
+	 * removes every listed id that is present, emitting `remove` once per
+	 * removed instance, and returns `true` only when every listed id was
+	 * present.
 	 *
 	 * @param target - Omit to remove all, a single id, or a list of ids
 	 * @returns `boolean` for the single-id / list-of-ids forms; `void` for the remove-all form
@@ -182,14 +182,17 @@ export class TemplateManager implements TemplateManagerInterface {
 			this.#emitter.emit('remove', instance)
 			return true
 		}
-		for (const id of target) if (!this.#templates.has(id)) return false
+		let all = true
 		for (const id of target) {
 			const instance = this.#templates.get(id)
-			if (instance === undefined) continue
+			if (instance === undefined) {
+				all = false
+				continue
+			}
 			this.#templates.delete(id)
 			this.#emitter.emit('remove', instance)
 		}
-		return true
+		return all
 	}
 
 	/** Remove every registered template, emitting `clear`. */
