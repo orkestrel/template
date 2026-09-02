@@ -18,7 +18,7 @@ const instance = createTemplate({ id: 'example' })
 
 ## Guide
 
-For the full surface, see [`guides/src/template.md`](guides/src/template.md).
+For the full surface, see [`guides/template.md`](guides/template.md).
 
 ## License
 
