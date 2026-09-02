@@ -222,9 +222,9 @@ export interface TemplateManagerOptions {
  * {@link TemplateError} coded `CONFLICT` when the id already exists unless
  * `options.replace` is `true`. `template` returns `undefined` for an unknown
  * id; `fill`, `validate`, and `parameters` throw `NOTFOUND` for one, because
- * each needs a template to proceed. `remove`'s batch form is all-or-nothing:
- * any missing id in the list leaves the collection untouched and returns
- * `false`. `clear` is the sole remove-all.
+ * each needs a template to proceed. `remove()` removes every registered
+ * template. `remove`'s batch form is all-or-nothing: any missing id in the
+ * list leaves the collection untouched and returns `false`.
  */
 export interface TemplateManagerInterface {
 	readonly emitter: EmitterInterface<TemplateManagerEventMap>
@@ -239,6 +239,7 @@ export interface TemplateManagerInterface {
 	has(id: string): boolean
 	remove(ids: readonly string[]): boolean
 	remove(id: string): boolean
+	remove(): void
 	clear(): void
 	fill(id: string, values?: TemplateFillValues, options?: TemplateFillOptions): string
 	validate(id: string, values?: TemplateFillValues): TemplateValidationResult

@@ -152,25 +152,29 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Removes one or several registered templates by id (AGENTS §9.2 batch
-	 * overloads) — array overload declared first so a list resolves to the
-	 * batch form.
+	 * Remove one, several, or every registered template — array overload
+	 * declared first so a list resolves to the batch form.
 	 *
 	 * @remarks
-	 * `remove(id)` removes one template by id, emitting `remove` and returning
-	 * `true` when it existed, `false` otherwise. `remove(ids)` is
+	 * `remove()` removes every registered template, emitting `remove` once per
+	 * instance. `remove(id)` removes one template by id, emitting `remove` and
+	 * returning `true` when it existed, `false` otherwise. `remove(ids)` is
 	 * ALL-OR-NOTHING: if any id in the list is unregistered, the collection is
 	 * left untouched and `false` is returned; otherwise every listed template
-	 * is removed (each emitting `remove`) and `true` is returned. `clear` is
-	 * the sole remove-all; a caller wanting per-instance observation of a full
-	 * purge calls `remove(manager.templates().map((one) => one.id))` instead.
+	 * is removed (each emitting `remove`) and `true` is returned.
 	 *
-	 * @param target - A single id, or a list of ids
-	 * @returns `true` when every named template was removed
+	 * @param target - Omit to remove all, a single id, or a list of ids
+	 * @returns `boolean` for the single-id / list-of-ids forms; `void` for the remove-all form
 	 */
 	remove(ids: readonly string[]): boolean
 	remove(id: string): boolean
-	remove(target: string | readonly string[]): boolean {
+	remove(): void
+	remove(target?: string | readonly string[]): boolean | void {
+		if (target === undefined) {
+			for (const instance of this.#templates.values()) this.#emitter.emit('remove', instance)
+			this.#templates.clear()
+			return
+		}
 		if (typeof target === 'string') {
 			const instance = this.#templates.get(target)
 			if (instance === undefined) return false

@@ -194,10 +194,10 @@ greeting.parameters() // the compiled parameters record, or undefined
 The self-owning, id-keyed registry over templates (AGENTS §9). `register`
 accepts a constructed `TemplateInterface` or a plain `TemplateOptions` bag,
 throwing a `TemplateError` coded `CONFLICT` on a duplicate id unless
-`options.replace` is `true`. `remove`'s array form is all-or-nothing, and
-`clear` is the sole remove-all. The `template` accessor returns `undefined`
-for an unknown id; `fill` / `validate` / `parameters` throw `TemplateError`
-coded `NOTFOUND` for one, because each needs a template to proceed.
+`options.replace` is `true`. `remove`'s array form is all-or-nothing. The
+`template` accessor returns `undefined` for an unknown id; `fill` /
+`validate` / `parameters` throw `TemplateError` coded `NOTFOUND` for one,
+because each needs a template to proceed.
 
 | Method       | Returns                                | Behavior                                                                                                       |
 | ------------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -206,8 +206,8 @@ coded `NOTFOUND` for one, because each needs a template to proceed.
 | `templates`  | `readonly TemplateInterface[]`         | List ALL registered templates (AGENTS §9.1 plural accessor).                                                   |
 | `find`       | `readonly TemplateInterface[]`         | Filter registered templates by `name` / `category` / `tag` — every supplied field must match.                  |
 | `has`        | `boolean`                              | Whether a template with the given id is registered.                                                            |
-| `remove`     | `boolean`                              | Remove LISTED templates by id, or ONE template by id (AGENTS §9.2); emits `remove` per removed id.             |
-| `clear`      | `void`                                 | Remove every registered template — the sole remove-all — emitting `clear`.                                     |
+| `remove`     | `boolean` (or `void`)                  | Remove LISTED templates by id, ONE template by id, or ALL templates; emits `remove` per removed id.            |
+| `clear`      | `void`                                 | Remove every registered template, emitting `clear`.                                                            |
 | `fill`       | `string`                               | Fill a registered template by id.                                                                              |
 | `validate`   | `TemplateValidationResult`             | Validate values against a registered template by id.                                                           |
 | `parameters` | `Record<string, unknown> \| undefined` | Project a registered template's parameters by id.                                                              |

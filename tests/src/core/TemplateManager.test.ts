@@ -208,6 +208,17 @@ describe('TemplateManager#remove', () => {
 		expect(manager.count).toBe(0)
 	})
 
+	it('remove() removes every registered template and returns void', () => {
+		const manager = new TemplateManager()
+		manager.register({ id: 'a', name: 'a', content: 'A' })
+		manager.register({ id: 'b', name: 'b', content: 'B' })
+
+		const result = manager.remove()
+
+		expect(result).toBeUndefined()
+		expect(manager.count).toBe(0)
+	})
+
 	it('emits remove with the removed instance for remove(id)', () => {
 		const manager = new TemplateManager()
 		const instance = manager.register({ id: 'a', name: 'a', content: 'A' })
@@ -241,6 +252,18 @@ describe('TemplateManager#remove', () => {
 		manager.remove(['a', 'missing'])
 
 		expect(recorder.count).toBe(0)
+	})
+
+	it('emits remove once per registered template for remove()', () => {
+		const manager = new TemplateManager()
+		manager.register({ id: 'a', name: 'a', content: 'A' })
+		manager.register({ id: 'b', name: 'b', content: 'B' })
+		const recorder = createRecorder<[template: TemplateInterface]>()
+		manager.emitter.on('remove', recorder.handler)
+
+		manager.remove()
+
+		expect(recorder.count).toBe(2)
 	})
 
 	it('remove(ids[]) over templates() purges the registry, emitting remove per instance', () => {
