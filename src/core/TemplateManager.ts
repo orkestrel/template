@@ -69,7 +69,7 @@ export class TemplateManager implements TemplateManagerInterface {
 		return this.#emitter
 	}
 
-	get size(): number {
+	get count(): number {
 		return this.#templates.size
 	}
 
@@ -105,16 +105,14 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Look up a registered template by id.
+	 * Returns one registered {@link TemplateInterface} by id (AGENTS §9.1
+	 * singular accessor).
 	 *
 	 * @param id - The template id
-	 * @returns The registered {@link TemplateInterface}
-	 * @throws {@link TemplateError} coded `NOTFOUND` when `id` is unknown
+	 * @returns The registered {@link TemplateInterface}, or `undefined` when `id` is unregistered
 	 */
-	template(id: string): TemplateInterface {
-		const instance = this.#templates.get(id)
-		if (instance === undefined) this.#throwNotFound(id)
-		return instance
+	template(id: string): TemplateInterface | undefined {
+		return this.#templates.get(id)
 	}
 
 	/**
@@ -154,30 +152,25 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Remove one, several, or every registered template (AGENTS §9.2 batch
+	 * Removes one or several registered templates by id (AGENTS §9.2 batch
 	 * overloads) — array overload declared first so a list resolves to the
 	 * batch form.
 	 *
 	 * @remarks
-	 * `remove()` removes every registered template, emitting `remove` once per
-	 * instance. `remove(id)` removes one template by id, emitting `remove` and
-	 * returning `true` when it existed, `false` otherwise. `remove(ids)` is
+	 * `remove(id)` removes one template by id, emitting `remove` and returning
+	 * `true` when it existed, `false` otherwise. `remove(ids)` is
 	 * ALL-OR-NOTHING: if any id in the list is unregistered, the collection is
 	 * left untouched and `false` is returned; otherwise every listed template
-	 * is removed (each emitting `remove`) and `true` is returned.
+	 * is removed (each emitting `remove`) and `true` is returned. `clear` is
+	 * the sole remove-all; a caller wanting per-instance observation of a full
+	 * purge calls `remove(manager.templates().map((one) => one.id))` instead.
 	 *
-	 * @param target - Omit to remove all, a single id, or a list of ids
-	 * @returns `boolean` for the single-id / list-of-ids forms; `void` for the remove-all form
+	 * @param target - A single id, or a list of ids
+	 * @returns `true` when every named template was removed
 	 */
 	remove(ids: readonly string[]): boolean
 	remove(id: string): boolean
-	remove(): void
-	remove(target?: string | readonly string[]): boolean | void {
-		if (target === undefined) {
-			for (const instance of this.#templates.values()) this.#emitter.emit('remove', instance)
-			this.#templates.clear()
-			return
-		}
+	remove(target: string | readonly string[]): boolean {
 		if (typeof target === 'string') {
 			const instance = this.#templates.get(target)
 			if (instance === undefined) return false
@@ -202,7 +195,7 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Fill a registered template by id.
+	 * Fills a registered template by id.
 	 *
 	 * @param id - The template id
 	 * @param values - The values tokens resolve against
@@ -211,11 +204,11 @@ export class TemplateManager implements TemplateManagerInterface {
 	 * @throws {@link TemplateError} coded `NOTFOUND` when `id` is unknown
 	 */
 	fill(id: string, values?: TemplateFillValues, options?: TemplateFillOptions): string {
-		return this.template(id).fill(values, options)
+		return this.#require(id).fill(values, options)
 	}
 
 	/**
-	 * Validate values against a registered template by id.
+	 * Validates values against a registered template by id.
 	 *
 	 * @param id - The template id
 	 * @param values - The values to check
@@ -223,18 +216,18 @@ export class TemplateManager implements TemplateManagerInterface {
 	 * @throws {@link TemplateError} coded `NOTFOUND` when `id` is unknown
 	 */
 	validate(id: string, values?: TemplateFillValues): TemplateValidationResult {
-		return this.template(id).validate(values)
+		return this.#require(id).validate(values)
 	}
 
 	/**
-	 * Project a registered template's parameters by id.
+	 * Projects a registered template's parameters by id.
 	 *
 	 * @param id - The template id
 	 * @returns The compiled parameters record, or `undefined` when the template has none
 	 * @throws {@link TemplateError} coded `NOTFOUND` when `id` is unknown
 	 */
 	parameters(id: string): Readonly<Record<string, unknown>> | undefined {
-		return this.template(id).parameters()
+		return this.#require(id).parameters()
 	}
 
 	#instantiate(template: TemplateInterface | TemplateOptions): TemplateInterface {
@@ -259,7 +252,13 @@ export class TemplateManager implements TemplateManagerInterface {
 		)
 	}
 
-	#throwNotFound(id: string): never {
-		throw new TemplateError('NOTFOUND', `Unknown template id: ${id}`, { id })
+	// Every by-id operation that needs a template to proceed shares this lookup.
+	// The `template` accessor deliberately does not, and returns `undefined`.
+	#require(id: string): TemplateInterface {
+		const instance = this.#templates.get(id)
+		if (instance === undefined) {
+			throw new TemplateError('NOTFOUND', `Unknown template id: ${id}`, { id })
+		}
+		return instance
 	}
 }

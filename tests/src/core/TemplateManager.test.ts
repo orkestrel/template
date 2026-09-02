@@ -36,7 +36,7 @@ describe('TemplateManager#register', () => {
 
 		expect(manager.template('greeting')).toBe(replacement)
 		expect(manager.template('greeting')).not.toBe(original)
-		expect(manager.template('greeting').content).toBe('Hi again')
+		expect(manager.template('greeting')?.content).toBe('Hi again')
 	})
 
 	it('applies manager missing/locale defaults when registering a TemplateOptions bag', () => {
@@ -75,12 +75,17 @@ describe('TemplateManager#register', () => {
 })
 
 describe('TemplateManager#template', () => {
-	it('throws TemplateError coded NOTFOUND for an unknown id', () => {
+	it('returns undefined for an unknown id', () => {
 		const manager = new TemplateManager()
 
-		const error = captureError(() => manager.template('missing'))
+		expect(manager.template('missing')).toBeUndefined()
+	})
 
-		expect(isTemplateError(error) && error.code === 'NOTFOUND').toBe(true)
+	it('returns the registered instance for a known id', () => {
+		const manager = new TemplateManager()
+		const instance = manager.register({ id: 'a', name: 'a', content: 'A' })
+
+		expect(manager.template('a')).toBe(instance)
 	})
 })
 
@@ -151,7 +156,7 @@ describe('TemplateManager#find', () => {
 	})
 })
 
-describe('TemplateManager#has / #size', () => {
+describe('TemplateManager#has / #count', () => {
 	it('has reports registered ids and not unregistered ones', () => {
 		const manager = new TemplateManager()
 		manager.register({ id: 'a', name: 'a', content: 'A' })
@@ -160,14 +165,14 @@ describe('TemplateManager#has / #size', () => {
 		expect(manager.has('b')).toBe(false)
 	})
 
-	it('size reflects the number of registered templates', () => {
+	it('count reflects the number of registered templates', () => {
 		const manager = new TemplateManager()
-		expect(manager.size).toBe(0)
+		expect(manager.count).toBe(0)
 
 		manager.register({ id: 'a', name: 'a', content: 'A' })
 		manager.register({ id: 'b', name: 'b', content: 'B' })
 
-		expect(manager.size).toBe(2)
+		expect(manager.count).toBe(2)
 	})
 })
 
@@ -200,18 +205,7 @@ describe('TemplateManager#remove', () => {
 		manager.register({ id: 'b', name: 'b', content: 'B' })
 
 		expect(manager.remove(['a', 'b'])).toBe(true)
-		expect(manager.size).toBe(0)
-	})
-
-	it('remove() removes every registered template and returns void', () => {
-		const manager = new TemplateManager()
-		manager.register({ id: 'a', name: 'a', content: 'A' })
-		manager.register({ id: 'b', name: 'b', content: 'B' })
-
-		const result = manager.remove()
-
-		expect(result).toBeUndefined()
-		expect(manager.size).toBe(0)
+		expect(manager.count).toBe(0)
 	})
 
 	it('emits remove with the removed instance for remove(id)', () => {
@@ -249,15 +243,16 @@ describe('TemplateManager#remove', () => {
 		expect(recorder.count).toBe(0)
 	})
 
-	it('emits remove once per registered template for remove()', () => {
+	it('remove(ids[]) over templates() purges the registry, emitting remove per instance', () => {
 		const manager = new TemplateManager()
 		manager.register({ id: 'a', name: 'a', content: 'A' })
 		manager.register({ id: 'b', name: 'b', content: 'B' })
 		const recorder = createRecorder<[template: TemplateInterface]>()
 		manager.emitter.on('remove', recorder.handler)
 
-		manager.remove()
+		expect(manager.remove(manager.templates().map((one) => one.id))).toBe(true)
 
+		expect(manager.count).toBe(0)
 		expect(recorder.count).toBe(2)
 	})
 })
@@ -269,7 +264,7 @@ describe('TemplateManager#clear', () => {
 
 		manager.clear()
 
-		expect(manager.size).toBe(0)
+		expect(manager.count).toBe(0)
 	})
 
 	it('emits clear with no payload', () => {
@@ -292,7 +287,7 @@ describe('TemplateManager — constructor seeding', () => {
 		})
 
 		expect(manager.has('a')).toBe(true)
-		expect(manager.size).toBe(1)
+		expect(manager.count).toBe(1)
 	})
 
 	it('does NOT emit register for seeded templates, even with a recorder wired via hooks at construction', () => {

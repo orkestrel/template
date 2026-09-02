@@ -61,7 +61,7 @@ describe('createTemplateManager', () => {
 		})
 
 		expect(manager.has('a')).toBe(true)
-		expect(manager.size).toBe(1)
+		expect(manager.count).toBe(1)
 	})
 
 	it('applies manager missing/locale defaults to option-bags registered through it', () => {

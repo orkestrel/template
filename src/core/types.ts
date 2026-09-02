@@ -220,24 +220,25 @@ export interface TemplateManagerOptions {
  * `register` accepts either a constructed {@link TemplateInterface} or a
  * plain {@link TemplateOptions} bag (constructed internally), and throws a
  * {@link TemplateError} coded `CONFLICT` when the id already exists unless
- * `options.replace` is `true`. `template` throws `NOTFOUND` for an unknown
- * id. `remove`'s batch form is all-or-nothing: any missing id in the list
- * leaves the collection untouched and returns `false`.
+ * `options.replace` is `true`. `template` returns `undefined` for an unknown
+ * id; `fill`, `validate`, and `parameters` throw `NOTFOUND` for one, because
+ * each needs a template to proceed. `remove`'s batch form is all-or-nothing:
+ * any missing id in the list leaves the collection untouched and returns
+ * `false`. `clear` is the sole remove-all.
  */
 export interface TemplateManagerInterface {
 	readonly emitter: EmitterInterface<TemplateManagerEventMap>
-	readonly size: number
+	readonly count: number
 	register(
 		template: TemplateInterface | TemplateOptions,
 		options?: TemplateRegisterOptions,
 	): TemplateInterface
-	template(id: string): TemplateInterface
+	template(id: string): TemplateInterface | undefined
 	templates(): readonly TemplateInterface[]
 	find(query?: TemplateQuery): readonly TemplateInterface[]
 	has(id: string): boolean
 	remove(ids: readonly string[]): boolean
 	remove(id: string): boolean
-	remove(): void
 	clear(): void
 	fill(id: string, values?: TemplateFillValues, options?: TemplateFillOptions): string
 	validate(id: string, values?: TemplateFillValues): TemplateValidationResult
@@ -251,8 +252,8 @@ export interface TemplateManagerInterface {
  *
  * @remarks
  * `MISSING` — a required placeholder stayed unresolved under the `error`
- * {@link MissingPolicy}. `NOTFOUND` — `TemplateManagerInterface#template`
- * (or `fill` / `validate` / `parameters` by id) was handed an unknown id.
+ * {@link MissingPolicy}. `NOTFOUND` — `TemplateManagerInterface#fill`,
+ * `#validate`, or `#parameters` was handed an unknown id.
  * `INVALID` — `createTemplate` was handed data that fails validation.
  * `CONFLICT` — `register` was handed an id already present without
  * `options.replace`.

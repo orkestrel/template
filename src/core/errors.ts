@@ -41,7 +41,7 @@ export class TemplateError extends Error {
  * import { isTemplateError } from '@src/core'
  *
  * try {
- * 	manager.template('missing')
+ * 	manager.fill('missing')
  * } catch (error) {
  * 	if (isTemplateError(error) && error.code === 'NOTFOUND') return
  * }
