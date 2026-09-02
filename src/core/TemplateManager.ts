@@ -18,7 +18,7 @@ import { TemplateError } from './errors.js'
 import { Template } from './Template.js'
 
 /**
- * The template registry — a self-owning, id-keyed record-holder for the
+ * Represents the template registry — a self-owning, id-keyed record-holder for the
  * {@link TemplateInterface} instances a consumer registers, looks up, fills,
  * and validates by id (AGENTS §9.1 singular/plural accessors, §9.2 batch
  * `remove` overloads, §13 emitter ownership).
@@ -74,7 +74,7 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Register a template — a constructed {@link TemplateInterface} (kept
+	 * Registers a template — a constructed {@link TemplateInterface} (kept
 	 * as-is) or a plain {@link TemplateOptions} bag (constructed into a
 	 * `Template` with this manager's `missing` / `locale` defaults applied
 	 * wherever the bag omits them).
@@ -116,7 +116,7 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * List every registered template.
+	 * Lists every registered template.
 	 *
 	 * @returns A snapshot array of every registered {@link TemplateInterface}
 	 */
@@ -125,7 +125,7 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Filter registered templates by name / category / tag — every supplied
+	 * Filters registered templates by name / category / tag — every supplied
 	 * field must match (logical AND).
 	 *
 	 * @param query - The {@link TemplateQuery} to filter by; omit for every registered template
@@ -142,17 +142,17 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Test whether a template id is registered.
+	 * Tests whether a template id is registered.
 	 *
 	 * @param id - The template id
-	 * @returns `true` when `id` is registered
+	 * @returns True if `id` is registered; false otherwise
 	 */
 	has(id: string): boolean {
 		return this.#templates.has(id)
 	}
 
 	/**
-	 * Remove one, several, or every registered template — array overload
+	 * Removes one, several, or every registered template — array overload
 	 * declared first so a list resolves to the batch form.
 	 *
 	 * @remarks
@@ -195,7 +195,7 @@ export class TemplateManager implements TemplateManagerInterface {
 		return all
 	}
 
-	/** Remove every registered template, emitting `clear`. */
+	/** Removes every registered template, emitting `clear`. */
 	clear(): void {
 		this.#templates.clear()
 		this.#emitter.emit('clear')

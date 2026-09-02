@@ -4,7 +4,7 @@ import type { TemplateErrorCode } from './types.js'
 // carrying a machine-readable `code`, so a `catch` branches on `error.code`.
 
 /**
- * An error thrown by the template layer.
+ * Represents an error thrown by the template layer.
  *
  * @remarks
  * Thrown for: a required placeholder staying unresolved under the `error`
@@ -31,10 +31,10 @@ export class TemplateError extends Error {
 }
 
 /**
- * Narrow an unknown caught value to a {@link TemplateError}.
+ * Narrows an unknown caught value to a {@link TemplateError}.
  *
  * @param value - The value to test (typically a `catch` binding)
- * @returns `true` when `value` is a {@link TemplateError}
+ * @returns True if `value` is a {@link TemplateError}; false otherwise
  *
  * @example
  * ```ts

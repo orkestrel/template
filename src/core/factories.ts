@@ -8,7 +8,7 @@ import { Template } from './Template.js'
 import { TemplateManager } from './TemplateManager.js'
 
 /**
- * Create a template.
+ * Creates a template.
  *
  * @param options - The template's `name` / `content`, an optional `id`
  *   (defaults to a generated UUID), `placeholders`, catalog metadata, and
@@ -28,7 +28,7 @@ export function createTemplate(options: TemplateOptions): TemplateInterface {
 }
 
 /**
- * Create a template registry.
+ * Creates a template registry.
  *
  * @param options - Optional initial `templates` seed collection and
  *   manager-wide `missing` / `locale` fill defaults, emitter `on` hooks, and

@@ -7,7 +7,7 @@ import { objectShape, optionalShape, stringShape } from '@orkestrel/contract'
 // the `helpers.ts` leaf pair: they consume it, and it never consumes them.
 
 /**
- * Build the `@orkestrel/contract` object shape describing a template's
+ * Builds the `@orkestrel/contract` object shape describing a template's
  * declared placeholders.
  *
  * @remarks

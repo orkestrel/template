@@ -4,8 +4,8 @@ import type { MissingPolicy } from './types.js'
 // UPPER_SNAKE_CASE data, the sole home for module-scope literal defaults).
 
 /**
- * The single-pass `{{name}}` substitution pattern shared by `Template#fill`
- * and `Template#validate`.
+ * Holds the single-pass `{{name}}` substitution pattern shared by
+ * `Template#fill` and `Template#validate`.
  *
  * @remarks
  * Global-flagged, two-alternative pattern: a match of the FIRST alternative
@@ -25,15 +25,16 @@ import type { MissingPolicy } from './types.js'
  */
 export const FILL_PATTERN = /\\\{\{|\{\{([^{}]+?)\}\}/g
 
-/** Default `missing` policy for `Template#fill` / `TemplateManager#fill` when unspecified. */
+/** Holds the default `missing` policy for `Template#fill` / `TemplateManager#fill` when unspecified. */
 export const DEFAULT_MISSING_POLICY: MissingPolicy = 'error'
 
-/** Default `locale` for `Template#fill` / `TemplateManager#fill` when unspecified. */
+/** Holds the default `locale` for `Template#fill` / `TemplateManager#fill` when unspecified. */
 export const DEFAULT_LOCALE = 'en-US'
 
 /**
- * Prototype-pollution-unsafe field-path segments — a fill lookup refuses to
- * resolve ANY path containing one, treating the placeholder as unresolved.
+ * Lists the prototype-pollution-unsafe field-path segments — a fill lookup
+ * refuses to resolve ANY path containing one, treating the placeholder as
+ * unresolved.
  */
 export const UNSAFE_FIELD_SEGMENTS: readonly string[] = Object.freeze([
 	'__proto__',

@@ -20,7 +20,7 @@ import { TemplateError } from './errors.js'
 // these leaves rather than duplicating the substitution logic.
 
 /**
- * Format a resolved fill value for substitution into a template's `content`.
+ * Formats a resolved fill value for substitution into a template's `content`.
  *
  * @remarks
  * A finite number renders with the given locale's thousand grouping (via
@@ -49,7 +49,7 @@ export function formatValue(value: unknown, locale: string): string {
 }
 
 /**
- * Resolve a field path against a fill-values record, refusing any path that
+ * Resolves a field path against a fill-values record, refusing any path that
  * touches a prototype-pollution-unsafe segment.
  *
  * @remarks
@@ -125,7 +125,7 @@ export function resolveToken(
 }
 
 /**
- * Substitute every `{{name}}` token in `content` in a single pass.
+ * Substitutes every `{{name}}` token in `content` in a single pass.
  *
  * @remarks
  * Uses a fresh `RegExp` clone of `FILL_PATTERN` per call (never sharing its

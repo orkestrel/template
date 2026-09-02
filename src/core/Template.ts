@@ -16,8 +16,8 @@ import { placeholderShape } from './shapers.js'
 import { TemplateError } from './errors.js'
 
 /**
- * A named, versionable template — `{{name}}` tokens in `content`, filled
- * against a values record.
+ * Represents a named, versionable template — `{{name}}` tokens in `content`,
+ * filled against a values record.
  *
  * @remarks
  * `missing` / `locale` seed this instance's default {@link TemplateFillOptions},
@@ -76,7 +76,7 @@ export class Template implements TemplateInterface {
 	}
 
 	/**
-	 * The plain, JSON-serializable data this template carries.
+	 * Returns the plain, JSON-serializable data this template carries.
 	 *
 	 * @returns The {@link TemplateDefinition} record
 	 *
@@ -100,7 +100,7 @@ export class Template implements TemplateInterface {
 	}
 
 	/**
-	 * Substitute every `{{name}}` token in `content` against `values`.
+	 * Substitutes every `{{name}}` token in `content` against `values`.
 	 *
 	 * @param values - The values tokens resolve against
 	 * @param options - Per-call overrides for this instance's `missing` / `locale` defaults
@@ -121,7 +121,7 @@ export class Template implements TemplateInterface {
 	}
 
 	/**
-	 * Report which required placeholders would stay unresolved, and which
+	 * Reports which required placeholders would stay unresolved, and which
 	 * `values` keys go unused, without producing output.
 	 *
 	 * @remarks
@@ -178,7 +178,7 @@ export class Template implements TemplateInterface {
 	}
 
 	/**
-	 * Project this template's placeholders to the open tool-parameters record
+	 * Projects this template's placeholders to the open tool-parameters record
 	 * shape.
 	 *
 	 * @returns The compiled parameters record, or `undefined` when `schemaToParameters` yields none

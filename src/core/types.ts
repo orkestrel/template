@@ -10,9 +10,9 @@ import type { EmitterErrorHandler, EmitterHooks, EmitterInterface } from '@orkes
 // === Template data model — pure JSON-serializable, versionable
 
 /**
- * One placeholder a {@link TemplateDefinition}'s `content` declares — its
- * lookup name, an optional field path into the values record, whether it is
- * required, and a literal fallback.
+ * Represents one placeholder a {@link TemplateDefinition}'s `content`
+ * declares — its lookup name, an optional field path into the values record,
+ * whether it is required, and a literal fallback.
  *
  * @remarks
  * `name` is the `{{name}}` token as written in `content`. `path`, when
@@ -32,7 +32,7 @@ export interface TemplatePlaceholder {
 }
 
 /**
- * A named, versionable template record — pure data, no behavior.
+ * Represents a named, versionable template record — pure data, no behavior.
  *
  * @remarks
  * `content` is the raw string carrying `{{name}}` tokens (see
@@ -52,7 +52,7 @@ export interface TemplateDefinition {
 }
 
 /**
- * How {@link TemplateInterface#fill} handles an unresolved required
+ * Names how {@link TemplateInterface#fill} handles an unresolved required
  * placeholder.
  *
  * @remarks
@@ -62,17 +62,17 @@ export interface TemplateDefinition {
  */
 export type MissingPolicy = 'error' | 'empty' | 'literal'
 
-/** The values a {@link TemplateInterface#fill} / `#validate` call resolves placeholders against. */
+/** Represents the values a {@link TemplateInterface#fill} / `#validate` call resolves placeholders against. */
 export type TemplateFillValues = Readonly<Record<string, unknown>>
 
-/** Per-call options for `TemplateInterface#fill` / `TemplateManagerInterface#fill`. */
+/** Carries the per-call options for `TemplateInterface#fill` / `TemplateManagerInterface#fill`. */
 export interface TemplateFillOptions {
 	readonly missing?: MissingPolicy
 	readonly locale?: string
 }
 
 /**
- * The full option bag `fillTemplate` takes — the per-call
+ * Carries the full option bag `fillTemplate` takes — the per-call
  * {@link TemplateFillOptions} plus the declared placeholders tokens resolve
  * against.
  *
@@ -86,8 +86,8 @@ export interface TemplateFillContext extends TemplateFillOptions {
 }
 
 /**
- * One `{{name}}` token's resolution — the single token rule `fillTemplate`
- * and `TemplateInterface#validate` share.
+ * Represents one `{{name}}` token's resolution — the single token rule
+ * `fillTemplate` and `TemplateInterface#validate` share.
  *
  * @remarks
  * `value` is the resolved fill value, `undefined` when the path is
@@ -104,7 +104,7 @@ export interface TemplateTokenResolution {
 	readonly required: boolean
 }
 
-/** The outcome of `TemplateInterface#validate` — which required placeholders are unresolved, and which supplied values are unused. */
+/** Reports the outcome of `TemplateInterface#validate` — which required placeholders are unresolved, and which supplied values are unused. */
 export interface TemplateValidationResult {
 	readonly valid: boolean
 	readonly missing: readonly string[]
@@ -112,7 +112,7 @@ export interface TemplateValidationResult {
 }
 
 /**
- * Options for `createTemplate` / the `Template` constructor.
+ * Carries the options for `createTemplate` / the `Template` constructor.
  *
  * @remarks
  * `id` defaults to a generated id when omitted. `placeholders` defaults to
@@ -133,7 +133,7 @@ export interface TemplateOptions {
 }
 
 /**
- * Options for `TemplateManagerInterface#register`.
+ * Carries the options for `TemplateManagerInterface#register`.
  *
  * @remarks
  * `replace` overwrites an existing entry sharing the registered id instead of
@@ -143,7 +143,7 @@ export interface TemplateRegisterOptions {
 	readonly replace?: boolean
 }
 
-/** A query for `TemplateManagerInterface#find` — every supplied field must match. */
+/** Represents a query for `TemplateManagerInterface#find` — every supplied field must match. */
 export interface TemplateQuery {
 	readonly name?: string
 	readonly category?: string
@@ -151,7 +151,7 @@ export interface TemplateQuery {
 }
 
 /**
- * The template contract (AGENTS §22 — exact bijection with `Template`).
+ * Declares the template contract (AGENTS §22 — exact bijection with `Template`).
  *
  * @remarks
  * `definition` returns the plain {@link TemplateDefinition} data. `fill`
@@ -181,21 +181,22 @@ export interface TemplateInterface {
 // === Manager — event map, options, interface
 
 /**
- * The push observation surface of a {@link TemplateManagerInterface} (AGENTS
- * §13) — an id-keyed registry, so `register` / `remove` are the events
+ * Declares the push observation surface of a {@link TemplateManagerInterface}
+ * (AGENTS §13) — an id-keyed registry, so `register` / `remove` are the events
  * (never ordered-list `append`/`prepend`).
  */
 export type TemplateManagerEventMap = {
-	/** A template was registered — carries the registered template. */
+	/** Fires when a template is registered — carries the registered template. */
 	readonly register: readonly [template: TemplateInterface]
-	/** A template was removed — carries the removed template. */
+	/** Fires when a template is removed — carries the removed template. */
 	readonly remove: readonly [template: TemplateInterface]
-	/** The registry was cleared. */
+	/** Fires when the registry is cleared. */
 	readonly clear: readonly []
 }
 
 /**
- * Options for `createTemplateManager` / the `TemplateManager` constructor.
+ * Carries the options for `createTemplateManager` / the `TemplateManager`
+ * constructor.
  *
  * @remarks
  * `templates` seeds the registry — either constructed {@link TemplateInterface}
@@ -213,8 +214,8 @@ export interface TemplateManagerOptions {
 }
 
 /**
- * The template registry — a self-owning, id-keyed record-holder (AGENTS §9.1
- * singular/plural accessors, §9.2 batch overloads).
+ * Declares the template registry — a self-owning, id-keyed record-holder
+ * (AGENTS §9.1 singular/plural accessors, §9.2 batch overloads).
  *
  * @remarks
  * `register` accepts either a constructed {@link TemplateInterface} or a
@@ -249,7 +250,7 @@ export interface TemplateManagerInterface {
 // === Errors
 
 /**
- * Coded misuse / failure conditions thrown as a {@link TemplateError}.
+ * Names the coded misuse / failure conditions thrown as a {@link TemplateError}.
  *
  * @remarks
  * `MISSING` — a required placeholder stayed unresolved under the `error`
