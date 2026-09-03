@@ -1,7 +1,7 @@
 import type { MissingPolicy } from './types.js'
 
-// Frozen default data for the template module (AGENTS §5 — constants are
-// UPPER_SNAKE_CASE data, the sole home for module-scope literal defaults).
+// Frozen default data for the template module — constants are
+// UPPER_SNAKE_CASE data, the sole home for module-scope literal defaults.
 
 /**
  * Holds the single-pass `{{name}}` substitution pattern shared by

@@ -1,14 +1,13 @@
+import * as setup from './setup.js'
 import { describe, expect, it } from 'vitest'
-import { isBrowserVuePath } from './setup.js'
 
-describe('isBrowserVuePath', () => {
-	it('accepts a browser Vue SFC path under every separator family', () => {
-		expect(isBrowserVuePath('app/browser/components/Widget.vue')).toBe(true)
-		expect(isBrowserVuePath('app\\browser\\components\\Widget.vue')).toBe(true)
-	})
+// tests/setup.test.ts — proves `tests/setup.ts`, `setupFiles[0]` for every Vitest project. The
+// module is deliberately export-free: it pins that loading it first contributes nothing to any
+// project, including the host-free `src:core`/`app:core` projects a helper landing here by
+// accident would silently leak into.
 
-	it('refuses a sibling environment and a prefix lookalike', () => {
-		expect(isBrowserVuePath('app/server/components/Widget.vue')).toBe(false)
-		expect(isBrowserVuePath('app/browserish/components/Widget.vue')).toBe(false)
+describe('setup', () => {
+	it('adds no export', () => {
+		expect(Object.keys(setup)).toEqual([])
 	})
 })

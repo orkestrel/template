@@ -8,12 +8,12 @@ import type {
 	TemplateOptions,
 	TemplatePlaceholder,
 	TemplateValidationResult,
-} from './types.js'
+} from '../types.js'
 import { createContract, schemaToParameters } from '@orkestrel/contract'
-import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY, FILL_PATTERN } from './constants.js'
-import { fillTemplate, resolveToken } from './helpers.js'
-import { placeholderShape } from './shapers.js'
-import { TemplateError } from './errors.js'
+import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY, FILL_PATTERN } from '../constants.js'
+import { fillTemplate, resolveToken } from '../helpers.js'
+import { placeholderShape } from '../shapers.js'
+import { TemplateError } from '../errors.js'
 
 /**
  * Represents a named, versionable template — `{{name}}` tokens in `content`,
@@ -22,7 +22,9 @@ import { TemplateError } from './errors.js'
  * @remarks
  * `missing` / `locale` seed this instance's default {@link TemplateFillOptions},
  * overridable per `fill` call. Its `parameters()` contract (built from
- * `placeholders` via `placeholderShape`) compiles once, in the constructor.
+ * `placeholders` through `placeholderShape`) compiles once, in the constructor.
+ *
+ * @throws {@link TemplateError} Thrown when `options.placeholders` declares a duplicate `name` or an empty `path` (coded `INVALID`)
  *
  * @example
  * ```ts
@@ -105,6 +107,7 @@ export class Template implements TemplateInterface {
 	 * @param values - The values tokens resolve against
 	 * @param options - Per-call overrides for this instance's `missing` / `locale` defaults
 	 * @returns The substituted content
+	 * @throws {@link TemplateError} Thrown when a required placeholder stays unresolved under the `'error'` policy (coded `MISSING`)
 	 *
 	 * @example
 	 * ```ts
@@ -133,7 +136,7 @@ export class Template implements TemplateInterface {
 	 * (first-appearance order, trimmed): `resolveToken` applies the one shared
 	 * token rule `fill` also applies — a declared {@link TemplatePlaceholder}
 	 * sharing its `name` supplies `path` (falling back to the token split on
-	 * `.`), and the value resolves via `resolveSafeField`. The token is `missing`
+	 * `.`), and the value resolves through `resolveSafeField`. The token is `missing`
 	 * only when the value is unresolved AND no `fallback` is declared AND the
 	 * placeholder is required (`required !== false`, including undeclared
 	 * tokens). `extra` lists every `values` key with no declared placeholder.

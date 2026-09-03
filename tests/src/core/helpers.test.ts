@@ -11,11 +11,10 @@ import { captureError } from '@orkestrel/test'
 import { describe, expect, it } from 'vitest'
 
 // The template fill engine's pure leaves — every function is referentially
-// transparent (AGENTS §16), so most tests double-invoke to pin run-twice
-// determinism directly. `interpolateMessage` parity vectors are adapted from
-// interpret's tests/src/core/helpers.test.ts:85-117 (cite-adapt).
+// transparent, so most tests double-invoke to pin run-twice determinism
+// directly.
 
-describe('fillTemplate — interpolateMessage parity (no declared placeholders, missing: empty)', () => {
+describe('fillTemplate — bare interpolation (no declared placeholders, missing: empty)', () => {
 	it('resolves a dotted {{path}} token against a nested record', () => {
 		expect(
 			fillTemplate('City: {{address.city}}', { address: { city: 'Reno' } }, { missing: 'empty' }),
@@ -48,11 +47,10 @@ describe('fillTemplate — interpolateMessage parity (no declared placeholders, 
 	})
 })
 
-describe('fillTemplate — known divergence from interpolateMessage', () => {
-	it('excludes "{" from the token class ([^{}]) where interpolateMessage ([^}]) would allow it', () => {
-		// interpolateMessage's /\{\{\s*([^}]+?)\s*\}\}/g would treat "a{b" as one
-		// captured token; our FILL_PATTERN's [^{}] class cannot — the inner `{`
-		// breaks the match, so the outer `{{` never resolves as a fill token here.
+describe('fillTemplate — token-class limit', () => {
+	it('leaves a token containing "{" unsubstituted, because the FILL_PATTERN token class [^{}] cannot match it', () => {
+		// The [^{}] token class excludes `{`, so the inner brace breaks the match
+		// and the outer `{{` never resolves as a fill token.
 		const content = '{{a{b}}'
 		const result = fillTemplate(content, {}, { missing: 'empty' })
 		expect(result).toBe(content)
@@ -169,7 +167,7 @@ describe('fillTemplate — repeated / unicode / whitespace tokens', () => {
 describe('fillTemplate — value coercion', () => {
 	it('number formatting: grouping, -0, NaN, Infinity, and non-finite String coercion', () => {
 		expect(fillTemplate('{{n}}', { n: 5010 }, { missing: 'empty' })).toBe('5,010')
-		expect(fillTemplate('{{n}}', { n: -0 }, { missing: 'empty' })).toBe(formatValue(-0, 'en-US'))
+		expect(fillTemplate('{{n}}', { n: -0 }, { missing: 'empty' })).toBe('-0')
 		expect(fillTemplate('{{n}}', { n: Number.NaN }, { missing: 'empty' })).toBe('NaN')
 		expect(fillTemplate('{{n}}', { n: Number.POSITIVE_INFINITY }, { missing: 'empty' })).toBe(
 			'Infinity',
@@ -197,9 +195,9 @@ describe('fillTemplate — empty inputs', () => {
 describe('fillTemplate — adversarial input', () => {
 	it('a pathological run of unmatched braces completes without catastrophic backtracking', () => {
 		const content = `${'{'.repeat(50_000)}{{name}}`
-		const start = Date.now()
+		const start = performance.now()
 		const result = fillTemplate(content, { name: 'Ada' })
-		const elapsed = Date.now() - start
+		const elapsed = performance.now() - start
 		expect(result.endsWith('Ada')).toBe(true)
 		expect(elapsed).toBeLessThan(2000)
 	})
@@ -233,9 +231,9 @@ describe('resolveSafeField', () => {
 describe('fillTemplate — ReDoS regression (R4)', () => {
 	it('completes quickly on an unclosed "{{" + a long whitespace run', () => {
 		const content = `{{${' '.repeat(1_000_000)}`
-		const start = Date.now()
+		const start = performance.now()
 		const result = fillTemplate(content, { name: 'x' }, { missing: 'empty' })
-		const elapsed = Date.now() - start
+		const elapsed = performance.now() - start
 		expect(typeof result).toBe('string')
 		expect(elapsed).toBeLessThan(2000)
 	})

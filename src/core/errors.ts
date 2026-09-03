@@ -1,7 +1,7 @@
 import type { TemplateErrorCode } from './types.js'
 
-// AGENTS §12: misuse of the template layer `throw`s a `TemplateError`
-// carrying a machine-readable `code`, so a `catch` branches on `error.code`.
+// Misuse of the template layer `throw`s a `TemplateError` carrying a
+// machine-readable `code`, so a `catch` branches on `error.code`.
 
 /**
  * Represents an error thrown by the template layer.

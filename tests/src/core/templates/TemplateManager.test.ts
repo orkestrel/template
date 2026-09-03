@@ -306,6 +306,42 @@ describe('TemplateManager#clear', () => {
 	})
 })
 
+describe('TemplateManager#destroy', () => {
+	it('drops every registered template and destroys the owned emitter', () => {
+		const manager = new TemplateManager()
+		manager.register({ id: 'a', name: 'a', content: 'A' })
+
+		manager.destroy()
+
+		expect(manager.count).toBe(0)
+		expect(manager.emitter.destroyed).toBe(true)
+	})
+
+	it('emits neither clear nor remove', () => {
+		const manager = new TemplateManager()
+		manager.register({ id: 'a', name: 'a', content: 'A' })
+		const removals = createRecorder<[template: TemplateInterface]>()
+		const clears = createRecorder<[]>()
+		manager.emitter.on('remove', removals.handler)
+		manager.emitter.on('clear', clears.handler)
+
+		manager.destroy()
+
+		expect(removals.count).toBe(0)
+		expect(clears.count).toBe(0)
+	})
+
+	it('is a no-op on a second call', () => {
+		const manager = new TemplateManager()
+		manager.destroy()
+
+		manager.destroy()
+
+		expect(manager.count).toBe(0)
+		expect(manager.emitter.destroyed).toBe(true)
+	})
+})
+
 describe('TemplateManager — constructor seeding', () => {
 	it('seeds templates() from options.templates', () => {
 		const manager = new TemplateManager({
@@ -316,7 +352,7 @@ describe('TemplateManager — constructor seeding', () => {
 		expect(manager.count).toBe(1)
 	})
 
-	it('does NOT emit register for seeded templates, even with a recorder wired via hooks at construction', () => {
+	it('does NOT emit register for seeded templates, even with a recorder wired through hooks at construction', () => {
 		const recorder = createRecorder<[template: TemplateInterface]>()
 
 		const manager = new TemplateManager({

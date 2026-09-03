@@ -4,8 +4,8 @@ import type {
 	TemplateManagerOptions,
 	TemplateOptions,
 } from './types.js'
-import { Template } from './Template.js'
-import { TemplateManager } from './TemplateManager.js'
+import { Template } from './templates/Template.js'
+import { TemplateManager } from './templates/TemplateManager.js'
 
 /**
  * Creates a template.
@@ -14,6 +14,7 @@ import { TemplateManager } from './TemplateManager.js'
  *   (defaults to a generated UUID), `placeholders`, catalog metadata, and
  *   `missing` / `locale` fill defaults
  * @returns A working {@link TemplateInterface}
+ * @throws {@link TemplateError} Thrown when `options.placeholders` declares a duplicate `name` or an empty `path` (coded `INVALID`)
  *
  * @example
  * ```ts
@@ -34,6 +35,7 @@ export function createTemplate(options: TemplateOptions): TemplateInterface {
  *   manager-wide `missing` / `locale` fill defaults, emitter `on` hooks, and
  *   an `error` handler
  * @returns A working {@link TemplateManagerInterface}
+ * @throws {@link TemplateError} Thrown when a seeded `options.templates` bag declares a duplicate placeholder `name` or an empty `path` (coded `INVALID`)
  *
  * @example
  * ```ts

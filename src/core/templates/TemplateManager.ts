@@ -10,18 +10,18 @@ import type {
 	TemplateQuery,
 	TemplateRegisterOptions,
 	TemplateValidationResult,
-} from './types.js'
+} from '../types.js'
 import type { EmitterInterface } from '@orkestrel/emitter'
 import { Emitter } from '@orkestrel/emitter'
-import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY } from './constants.js'
-import { TemplateError } from './errors.js'
+import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY } from '../constants.js'
+import { TemplateError } from '../errors.js'
 import { Template } from './Template.js'
 
 /**
  * Represents the template registry — a self-owning, id-keyed record-holder for the
  * {@link TemplateInterface} instances a consumer registers, looks up, fills,
- * and validates by id (AGENTS §9.1 singular/plural accessors, §9.2 batch
- * `remove` overloads, §13 emitter ownership).
+ * and validates by id, with singular/plural accessors, batch `remove`
+ * overloads, and emitter ownership.
  *
  * @remarks
  * `register` accepts either a constructed {@link TemplateInterface} (kept
@@ -82,6 +82,7 @@ export class TemplateManager implements TemplateManagerInterface {
 	 * @param template - The template instance or options to register
 	 * @param options - `replace` — overwrite an existing entry sharing the same id instead of throwing
 	 * @returns The registered {@link TemplateInterface}
+	 * @throws {@link TemplateError} Thrown when the id is already registered and `options.replace` is not `true` (coded `CONFLICT`), or when an options bag declares a duplicate placeholder `name` or an empty `path` (coded `INVALID`)
 	 *
 	 * @example
 	 * ```ts
@@ -105,8 +106,7 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Returns one registered {@link TemplateInterface} by id (AGENTS §9.1
-	 * singular accessor).
+	 * Returns one registered {@link TemplateInterface} by id.
 	 *
 	 * @param id - The template id
 	 * @returns The registered {@link TemplateInterface}, or `undefined` when `id` is unregistered
@@ -152,8 +152,7 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Removes one, several, or every registered template — array overload
-	 * declared first so a list resolves to the batch form.
+	 * Removes one, several, or every registered template.
 	 *
 	 * @remarks
 	 * `remove()` removes every registered template, emitting `remove` once per
@@ -166,6 +165,8 @@ export class TemplateManager implements TemplateManagerInterface {
 	 * @param target - Omit to remove all, a single id, or a list of ids
 	 * @returns `boolean` for the single-id / list-of-ids forms; `void` for the remove-all form
 	 */
+	// `readonly string[]` is not assignable to `id: string`, so a list resolves to the
+	// batch signature whatever order the signatures are declared in.
 	remove(ids: readonly string[]): boolean
 	remove(id: string): boolean
 	remove(): void
@@ -202,6 +203,27 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
+	 * Tears down the registry: drops every registered template and destroys the
+	 * owned emitter. Idempotent.
+	 *
+	 * @remarks
+	 * Teardown is not an observable registry operation and the emitter is being
+	 * released, so this emits neither `clear` nor `remove`. The emitter is torn
+	 * down last, after the registry is dropped.
+	 *
+	 * @example
+	 * ```ts
+	 * const manager = new TemplateManager()
+	 * manager.destroy()
+	 * manager.emitter.destroyed // true
+	 * ```
+	 */
+	destroy(): void {
+		this.#templates.clear()
+		this.#emitter.destroy()
+	}
+
+	/**
 	 * Fills a registered template by id.
 	 *
 	 * @param id - The template id
@@ -209,6 +231,7 @@ export class TemplateManager implements TemplateManagerInterface {
 	 * @param options - Per-call overrides for the template's `missing` / `locale` defaults
 	 * @returns The substituted content
 	 * @throws {@link TemplateError} coded `NOTFOUND` when `id` is unknown
+	 * @throws {@link TemplateError} Thrown when a required placeholder stays unresolved under the `'error'` policy (coded `MISSING`)
 	 */
 	fill(id: string, values?: TemplateFillValues, options?: TemplateFillOptions): string {
 		return this.#require(id).fill(values, options)

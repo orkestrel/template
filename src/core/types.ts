@@ -3,9 +3,9 @@ import type { EmitterErrorHandler, EmitterHooks, EmitterInterface } from '@orkes
 
 // @orkestrel/template — a stateful template manager/filler: named templates
 // with `{{placeholder}}` tokens, a single-pass fill engine, and an id-keyed
-// registry manager. Types are the source of truth (AGENTS §2); every
-// discriminant names its axis, never `kind` / `type` (AGENTS §4.4): `code`
-// splits coded errors, `missing` (a `MissingPolicy`) splits fill strategy.
+// registry manager. Types are the source of truth; every discriminant names
+// its axis, never `kind` / `type`: `code` splits coded errors, `missing` (a
+// `MissingPolicy`) splits fill strategy.
 
 // === Template data model — pure JSON-serializable, versionable
 
@@ -37,8 +37,10 @@ export interface TemplatePlaceholder {
  * @remarks
  * `content` is the raw string carrying `{{name}}` tokens (see
  * `FILL_PATTERN` in `constants.ts`); `placeholders` declares every token's
- * lookup rule. `summary` / `description` / `category` / `tags` are optional
- * catalog metadata for `TemplateManagerInterface#find`.
+ * lookup rule. `category` and `tags` are the fields
+ * `TemplateManagerInterface#find` filters on, alongside `name`. `summary` and
+ * `description` are catalog metadata that `definition()` carries and no query
+ * reads.
  */
 export interface TemplateDefinition {
 	readonly id: string
@@ -151,7 +153,7 @@ export interface TemplateQuery {
 }
 
 /**
- * Declares the template contract (AGENTS §22 — exact bijection with `Template`).
+ * Declares the template contract — exact bijection with `Template`.
  *
  * @remarks
  * `definition` returns the plain {@link TemplateDefinition} data. `fill`
@@ -182,8 +184,8 @@ export interface TemplateInterface {
 
 /**
  * Declares the push observation surface of a {@link TemplateManagerInterface}
- * (AGENTS §13) — an id-keyed registry, so `register` / `remove` are the events
- * (never ordered-list `append`/`prepend`).
+ * — an id-keyed registry, so `register` / `remove` are the events (never
+ * ordered-list `append`/`prepend`).
  */
 export type TemplateManagerEventMap = {
 	/** Fires when a template is registered — carries the registered template. */
@@ -202,7 +204,7 @@ export type TemplateManagerEventMap = {
  * `templates` seeds the registry — either constructed {@link TemplateInterface}
  * instances or plain {@link TemplateOptions} bags. `missing` / `locale` are
  * the manager-wide default {@link TemplateFillOptions}, overridable per-call.
- * `on` — initial event listeners (AGENTS §8/§13). `error` — the emitter's
+ * `on` — initial event listeners. `error` — the emitter's
  * listener-error handler.
  */
 export interface TemplateManagerOptions {
@@ -214,8 +216,8 @@ export interface TemplateManagerOptions {
 }
 
 /**
- * Declares the template registry — a self-owning, id-keyed record-holder
- * (AGENTS §9.1 singular/plural accessors, §9.2 batch overloads).
+ * Declares the template registry — a self-owning, id-keyed record-holder with
+ * singular/plural accessors and batch overloads.
  *
  * @remarks
  * `register` accepts either a constructed {@link TemplateInterface} or a
@@ -225,7 +227,9 @@ export interface TemplateManagerOptions {
  * id; `fill`, `validate`, and `parameters` throw `NOTFOUND` for one, because
  * each needs a template to proceed. `remove()` removes every registered
  * template. `remove`'s batch form removes every present id and reports
- * `true` only when all listed ids were present.
+ * `true` only when all listed ids were present. `destroy` tears the registry
+ * down — it drops every registered template, destroys the owned emitter, emits
+ * nothing, and is idempotent.
  */
 export interface TemplateManagerInterface {
 	readonly emitter: EmitterInterface<TemplateManagerEventMap>
@@ -242,6 +246,7 @@ export interface TemplateManagerInterface {
 	remove(id: string): boolean
 	remove(): void
 	clear(): void
+	destroy(): void
 	fill(id: string, values?: TemplateFillValues, options?: TemplateFillOptions): string
 	validate(id: string, values?: TemplateFillValues): TemplateValidationResult
 	parameters(id: string): Readonly<Record<string, unknown>> | undefined

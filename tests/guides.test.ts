@@ -1,6 +1,10 @@
 // The consumer-side guides-parity drop-in: runs `@orkestrel/guide`'s checks against
-// this repo's own `guides/README.md` manifest. The four constants below are this
-// package's own, and are the only part a sibling package changes.
+// this repo's own `guides/README.md` manifest. The constants below are this
+// package's own, and are the only part a sibling package changes. Every flagship fence
+// in `guides/template.md` is transcribed at the end of this file and asserted against what
+// its comments claim: name resolution is not a behavioural proof, so a fence documenting a
+// value the code contradicts is exactly what the transcriptions catch. Change a fence,
+// change its transcription.
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -18,8 +22,24 @@ import {
 	resolveLink,
 } from '@orkestrel/guide'
 import { readFileSync } from 'node:fs'
-import { requireValue } from '@orkestrel/test'
+import { captureError, requireValue } from '@orkestrel/test'
 import { readInventory } from '@orkestrel/test/server'
+import { createContract } from '@orkestrel/contract'
+import {
+	createTemplate,
+	createTemplateManager,
+	DEFAULT_LOCALE,
+	DEFAULT_MISSING_POLICY,
+	FILL_PATTERN,
+	fillTemplate,
+	formatValue,
+	isTemplateError,
+	placeholderShape,
+	resolveSafeField,
+	resolveToken,
+	TemplateError,
+	UNSAFE_FIELD_SEGMENTS,
+} from '@src/core'
 
 /** Every fence language this package's guides are allowed to use. */
 const FENCE_LANGUAGES = Object.freeze(['ts'])
@@ -168,3 +188,114 @@ for (const entry of manifest) {
 		})
 	})
 }
+
+// ── Flagship fence transcriptions ────────────────────────────────────────────
+//
+// Each case below is one `guides/template.md` fence, run against the real barrel and asserting
+// the value its comments claim.
+
+describe('flagship fences', () => {
+	it('fills a template and a registered template by id (Surface)', () => {
+		const greeting = createTemplate({ name: 'greeting', content: 'Hi {{name}}' })
+		expect(greeting.fill({ name: 'Ada' })).toBe('Hi Ada')
+
+		const templates = createTemplateManager({ templates: [greeting] })
+		expect(templates.fill(greeting.id, { name: 'Grace' })).toBe('Hi Grace')
+	})
+
+	it('carries the documented default data (Constants)', () => {
+		expect(DEFAULT_MISSING_POLICY).toBe('error')
+		expect(DEFAULT_LOCALE).toBe('en-US')
+		expect(UNSAFE_FIELD_SEGMENTS).toEqual(['__proto__', 'constructor', 'prototype'])
+		// The fence's `FILL_PATTERN.source` comment describes the pattern rather than
+		// claiming a value, so this asserts what it describes: the source matches a
+		// `{{name}}` token and an escaped `\{{`.
+		const pattern = new RegExp(FILL_PATTERN.source, FILL_PATTERN.flags)
+		expect(pattern.test('{{name}}')).toBe(true)
+		expect(new RegExp(FILL_PATTERN.source, FILL_PATTERN.flags).test('\\{{')).toBe(true)
+	})
+
+	it('narrows a caught TemplateError to its code (Errors)', () => {
+		const error = captureError(() => {
+			throw new TemplateError('NOTFOUND', 'Unknown template id: missing', { id: 'missing' })
+		})
+
+		expect(isTemplateError(error)).toBe(true)
+		expect(isTemplateError(error) ? error.code : undefined).toBe('NOTFOUND')
+	})
+
+	it('returns the documented values from every helper leaf (Helpers)', () => {
+		expect(formatValue(5010, 'en-US')).toBe('5,010')
+		expect(formatValue(null, 'en-US')).toBe('null')
+		expect(resolveSafeField({ a: { b: 1 } }, ['a', 'b'])).toBe(1)
+		expect(resolveSafeField({}, ['__proto__', 'polluted'])).toBeUndefined()
+		expect(resolveToken({ name: 'Ada' }, [], 'name').value).toBe('Ada')
+		expect(resolveToken({}, [{ name: 'nickname', required: false }], 'nickname').required).toBe(
+			false,
+		)
+		expect(fillTemplate('Hi {{name}}', { name: 'Ada' })).toBe('Hi Ada')
+		expect(fillTemplate('Limit {{limit}}', { limit: 5010 }, { missing: 'empty' })).toBe(
+			'Limit 5,010',
+		)
+	})
+
+	it('builds an object shape carrying a city string field (Shapers)', () => {
+		// The fence's comment describes the returned shape rather than claiming a value.
+		const contract = createContract(placeholderShape([{ name: 'city' }]))
+
+		expect(contract.schema.type).toBe('object')
+		expect(contract.schema.properties?.city?.type).toBe('string')
+		expect(contract.schema.required).toContain('city')
+	})
+
+	it('builds a working template and a seeded registry (Factories)', () => {
+		const greeting = createTemplate({ name: 'greeting', content: 'Hi {{name}}' })
+		expect(greeting.fill({ name: 'Ada' })).toBe('Hi Ada')
+
+		const templates = createTemplateManager({
+			templates: [{ id: 'greeting', name: 'greeting', content: 'Hi {{name}}' }],
+		})
+		expect(templates.fill('greeting', { name: 'Ada' })).toBe('Hi Ada')
+	})
+
+	it('drives one template through its contract (TemplateInterface)', () => {
+		const greeting = createTemplate({
+			name: 'greeting',
+			content: 'Hi {{name}}',
+			placeholders: [{ name: 'name' }],
+		})
+
+		expect(greeting.definition().name).toBe('greeting')
+		expect(greeting.fill({ name: 'Ada' })).toBe('Hi Ada')
+		expect(greeting.validate({}).missing).toEqual(['name'])
+		expect(greeting.parameters()).toBeDefined()
+	})
+
+	it('drives the registry through its contract (TemplateManagerInterface)', () => {
+		const templates = createTemplateManager()
+		const greeting = templates.register({
+			id: 'greeting',
+			name: 'greeting',
+			content: 'Hi {{name}}',
+		})
+
+		expect(templates.has('greeting')).toBe(true)
+		expect(templates.template('greeting')).toBe(greeting)
+		expect(templates.templates()).toEqual([greeting])
+		expect(templates.find({ name: 'greeting' })).toEqual([greeting])
+		expect(templates.fill('greeting', { name: 'Ada' })).toBe('Hi Ada')
+		// The registration declares no placeholders, so the `{{name}}` token is undeclared
+		// and therefore required — `validate` reports it missing.
+		expect(templates.validate('greeting', {}).missing).toEqual(['name'])
+		expect(templates.parameters('greeting')).toEqual({
+			type: 'object',
+			additionalProperties: false,
+		})
+		expect(templates.remove('greeting')).toBe(true)
+
+		templates.clear()
+		templates.destroy()
+
+		expect(templates.emitter.destroyed).toBe(true)
+	})
+})

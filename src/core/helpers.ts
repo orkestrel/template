@@ -14,7 +14,7 @@ import {
 } from './constants.js'
 import { TemplateError } from './errors.js'
 
-// The templates pure-leaf inventory (AGENTS §5/§7) — every function here is a
+// The templates pure-leaf inventory — every function here is a
 // referentially-transparent computation with no instance state, exported and
 // independently unit-testable. `Template#fill` / `#validate` route through
 // these leaves rather than duplicating the substitution logic.
@@ -23,10 +23,11 @@ import { TemplateError } from './errors.js'
  * Formats a resolved fill value for substitution into a template's `content`.
  *
  * @remarks
- * A finite number renders with the given locale's thousand grouping (via
+ * A finite number renders with the given locale's thousand grouping (through
  * `toLocaleString`); every other value — including `null` — String-coerces.
- * `null` therefore renders as the literal string `'null'`, intentionally
- * mirroring `interpolateMessage`'s coercion parity (see `fillTemplate`). An
+ * `null` therefore renders as the literal string `'null'`, matching
+ * `String(value)` exactly, so a resolved `null` is visible in the output
+ * rather than silently empty. An
  * invalid BCP-47 `locale` tag throws a `RangeError` from the underlying
  * `toLocaleString` call when `value` is a finite number — this is a caller
  * error (an invalid locale argument), by design, and is not caught here.
@@ -135,7 +136,7 @@ export function resolveToken(
  * {@link TemplatePlaceholder} (exact `name`) supplies its `path` (falling
  * back to the token split on `.`); ANY path segment in `UNSAFE_FIELD_SEGMENTS`
  * makes the token unresolved without ever calling `resolveField` (a
- * prototype-pollution guard). A resolved value formats via `formatValue`; an
+ * prototype-pollution guard). A resolved value formats through `formatValue`; an
  * unresolved value falls back to the placeholder's `fallback` when declared;
  * otherwise `options.missing` governs — `'literal'` re-emits the original
  * `{{name}}` text, `'empty'` emits `''`, and `'error'` emits `''` for every
@@ -144,11 +145,11 @@ export function resolveToken(
  * {@link TemplateError} coded `MISSING` listing them all, in first-appearance
  * order, once the scan completes. An escaped `\{{` emits a literal `{{`.
  *
- * PARITY: called with no declared `placeholders` and `{ missing: 'empty' }`,
- * this reproduces `interpolateMessage` (`@src/core` sibling
- * `interpret`) vector-for-vector. KNOWN DIVERGENCE: `FILL_PATTERN`'s token
- * class (`[^{}]`) excludes `{`, where `interpolateMessage`'s (`[^}]`) allows
- * it — a token containing `{` therefore behaves differently here.
+ * Called with no declared `placeholders` and `{ missing: 'empty' }`, this is a
+ * bare interpolation over `content` — every token resolves by dotted path
+ * against the values record and every unresolved token emits `''`.
+ * `FILL_PATTERN`'s token class (`[^{}]`) excludes `{`, so a token containing
+ * `{` never matches and the surrounding `{{` stays literal.
  *
  * @param content - The template content carrying `{{name}}` tokens
  * @param values - The values tokens resolve against
