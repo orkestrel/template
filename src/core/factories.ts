@@ -25,9 +25,16 @@ import { TemplateManager } from './templates/TemplateManager.js'
  * greeting.fill({ name: 'Ada' }) // 'Hi Ada'
  *
  * const templates = createTemplateManager({
- * 	templates: [{ id: 'greeting', name: 'greeting', content: 'Hi {{name}}' }],
+ * 	templates: [
+ * 		{ id: 'greeting', name: 'greeting', content: 'Hi {{name}}', category: 'mail' },
+ * 		{ id: 'farewell', name: 'farewell', content: 'Bye {{name}}', category: 'mail' },
+ * 		{ id: 'alert', name: 'alert', content: 'Alert: {{reason}}', category: 'ops' },
+ * 	],
  * })
  * templates.fill('greeting', { name: 'Ada' }) // 'Hi Ada'
+ * templates.find({ category: 'mail' }).map((one) => one.id) // ['greeting', 'farewell']
+ * templates.has('alert') // true
+ * templates.has('missing') // false
  * ```
  */
 export function createTemplate(options: TemplateOptions): TemplateInterface {

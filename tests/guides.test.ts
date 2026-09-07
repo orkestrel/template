@@ -340,9 +340,19 @@ describe('flagship fences', () => {
 		expect(greeting.fill({ name: 'Ada' })).toBe('Hi Ada')
 
 		const templates = createTemplateManager({
-			templates: [{ id: 'greeting', name: 'greeting', content: 'Hi {{name}}' }],
+			templates: [
+				{ id: 'greeting', name: 'greeting', content: 'Hi {{name}}', category: 'mail' },
+				{ id: 'farewell', name: 'farewell', content: 'Bye {{name}}', category: 'mail' },
+				{ id: 'alert', name: 'alert', content: 'Alert: {{reason}}', category: 'ops' },
+			],
 		})
 		expect(templates.fill('greeting', { name: 'Ada' })).toBe('Hi Ada')
+		expect(templates.find({ category: 'mail' }).map((one) => one.id)).toEqual([
+			'greeting',
+			'farewell',
+		])
+		expect(templates.has('alert')).toBe(true)
+		expect(templates.has('missing')).toBe(false)
 	})
 
 	it('drives one template through its contract (TemplateInterface)', () => {

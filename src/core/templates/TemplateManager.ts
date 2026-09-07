@@ -31,9 +31,9 @@ import { Template } from './Template.js'
  * manager's `missing` / `locale` defaults applied wherever the bag omits
  * them. A duplicate `id` throws a {@link TemplateError} coded `CONFLICT`
  * unless `options.replace` is `true`, in which case the existing entry is
- * overwritten. `options.templates` SEEDS the registry at construction
- * WITHOUT emitting `register` — only calls to `register` after construction
- * emit. The batch `remove(ids)` form removes every present id and returns
+ * overwritten. `options.templates` seeds the registry at construction without
+ * emitting `register` — only calls to `register` after construction emit.
+ * The batch `remove(ids)` form removes every present id and returns
  * `true` only when every listed id was present.
  *
  * @example
@@ -126,8 +126,8 @@ export class TemplateManager implements TemplateManagerInterface {
 	}
 
 	/**
-	 * Filters registered templates by name / category / tag — every supplied
-	 * field must match (logical AND).
+	 * Filters registered templates by `name`, `category`, and `tag` — every
+	 * supplied field must match.
 	 *
 	 * @param query - The {@link TemplateQuery} to filter by; omit for every registered template
 	 * @returns The matching templates

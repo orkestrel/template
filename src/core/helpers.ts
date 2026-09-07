@@ -56,9 +56,9 @@ export function formatValue(value: unknown, locale: string): string {
  * @remarks
  * A prototype-pollution guard shared by `fillTemplate` and `Template#validate`
  * so the two stay in lockstep: `path` normalizes to a segment array (a bare
- * string `path` becomes a single-segment array); if ANY segment appears in
+ * string `path` becomes a single-segment array); if any segment appears in
  * `UNSAFE_FIELD_SEGMENTS` (`'__proto__'`, `'constructor'`, `'prototype'`), the
- * lookup is refused and `undefined` is returned WITHOUT ever calling
+ * lookup is refused and `undefined` is returned without ever calling
  * `resolveField` — a path like `['__proto__', 'polluted']` can never reach
  * the record's actual prototype chain through this function. Every other
  * path resolves through `@orkestrel/contract`'s `resolveField`.
@@ -134,13 +134,13 @@ export function resolveToken(
  * never re-scanned. Each token resolves through `resolveToken`, the one rule
  * `Template#validate` also applies: the matching declared
  * {@link TemplatePlaceholder} (exact `name`) supplies its `path` (falling
- * back to the token split on `.`); ANY path segment in `UNSAFE_FIELD_SEGMENTS`
+ * back to the token split on `.`); any path segment in `UNSAFE_FIELD_SEGMENTS`
  * makes the token unresolved without ever calling `resolveField` (a
  * prototype-pollution guard). A resolved value formats through `formatValue`; an
  * unresolved value falls back to the placeholder's `fallback` when declared;
  * otherwise `options.missing` governs — `'literal'` re-emits the original
  * `{{name}}` text, `'empty'` emits `''`, and `'error'` emits `''` for every
- * token but collects EVERY unresolved required token (an undeclared token, or
+ * token but collects every unresolved required token (an undeclared token, or
  * a declared token with `required !== false`) and throws one
  * {@link TemplateError} coded `MISSING` listing them all, in first-appearance
  * order, once the scan completes. An escaped `\{{` emits a literal `{{`.

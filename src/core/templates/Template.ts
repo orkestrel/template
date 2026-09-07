@@ -137,7 +137,7 @@ export class Template implements TemplateInterface {
 	 * token rule `fill` also applies — a declared {@link TemplatePlaceholder}
 	 * sharing its `name` supplies `path` (falling back to the token split on
 	 * `.`), and the value resolves through `resolveSafeField`. The token is `missing`
-	 * only when the value is unresolved AND no `fallback` is declared AND the
+	 * only when the value is unresolved, no `fallback` is declared, and the
 	 * placeholder is required (`required !== false`, including undeclared
 	 * tokens). `extra` lists every `values` key with no declared placeholder.
 	 *
