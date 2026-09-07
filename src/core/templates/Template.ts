@@ -17,7 +17,7 @@ import { TemplateError } from '../errors.js'
 
 /**
  * Represents a named, versionable template — `{{name}}` tokens in `content`,
- * filled against a values record.
+ * filled against a values record — implementing `TemplateInterface` exactly.
  *
  * @remarks
  * `missing` / `locale` seed this instance's default {@link TemplateFillOptions},

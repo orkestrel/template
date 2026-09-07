@@ -33,8 +33,8 @@ export const DEFAULT_LOCALE = 'en-US'
 
 /**
  * Lists the prototype-pollution-unsafe field-path segments — a fill lookup
- * refuses to resolve ANY path containing one, treating the placeholder as
- * unresolved.
+ * refuses to resolve a path containing one of them, treating the placeholder
+ * as unresolved.
  */
 export const UNSAFE_FIELD_SEGMENTS: readonly string[] = Object.freeze([
 	'__proto__',

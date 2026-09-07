@@ -8,7 +8,8 @@ import { Template } from './templates/Template.js'
 import { TemplateManager } from './templates/TemplateManager.js'
 
 /**
- * Creates a template.
+ * Creates a working {@link TemplateInterface} from a {@link TemplateOptions}
+ * bag, backed by the `Template` class.
  *
  * @param options - The template's `name` / `content`, an optional `id`
  *   (defaults to a generated UUID), `placeholders`, catalog metadata, and
@@ -16,12 +17,17 @@ import { TemplateManager } from './templates/TemplateManager.js'
  * @returns A working {@link TemplateInterface}
  * @throws {@link TemplateError} Thrown when `options.placeholders` declares a duplicate `name` or an empty `path` (coded `INVALID`)
  *
- * @example
+ * @example Create a template and a registry
  * ```ts
- * import { createTemplate } from '@src/core'
+ * import { createTemplate, createTemplateManager } from '@orkestrel/template'
  *
  * const greeting = createTemplate({ name: 'greeting', content: 'Hi {{name}}' })
  * greeting.fill({ name: 'Ada' }) // 'Hi Ada'
+ *
+ * const templates = createTemplateManager({
+ * 	templates: [{ id: 'greeting', name: 'greeting', content: 'Hi {{name}}' }],
+ * })
+ * templates.fill('greeting', { name: 'Ada' }) // 'Hi Ada'
  * ```
  */
 export function createTemplate(options: TemplateOptions): TemplateInterface {
@@ -29,7 +35,8 @@ export function createTemplate(options: TemplateOptions): TemplateInterface {
 }
 
 /**
- * Creates a template registry.
+ * Creates a working {@link TemplateManagerInterface}, optionally seeded with
+ * the templates the options carry, backed by the `TemplateManager` class.
  *
  * @param options - Optional initial `templates` seed collection and
  *   manager-wide `missing` / `locale` fill defaults, emitter `on` hooks, and

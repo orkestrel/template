@@ -4,15 +4,16 @@ import type { TemplateErrorCode } from './types.js'
 // machine-readable `code`, so a `catch` branches on `error.code`.
 
 /**
- * Represents an error thrown by the template layer.
+ * Represents an error thrown by the template layer — a machine-readable
+ * {@link TemplateErrorCode} and an optional `context` record naming the
+ * offending id or placeholder name.
  *
  * @remarks
  * Thrown for: a required placeholder staying unresolved under the `error`
  * {@link MissingPolicy} (`MISSING`), an unknown template id
  * (`NOTFOUND`), `createTemplate` handed invalid data (`INVALID`), and
  * `TemplateManagerInterface#register` handed an id already present without
- * `options.replace` (`CONFLICT`). `context`, when present, carries the
- * offending id / name.
+ * `options.replace` (`CONFLICT`).
  */
 export class TemplateError extends Error {
 	readonly code: TemplateErrorCode

@@ -153,17 +153,13 @@ export interface TemplateQuery {
 }
 
 /**
- * Declares the template contract — exact bijection with `Template`.
+ * Declares the template contract a consumer holds — the readonly template
+ * record and the `definition`, `fill`, `validate`, and `parameters` calls
+ * over it.
  *
  * @remarks
- * `definition` returns the plain {@link TemplateDefinition} data. `fill`
- * substitutes every `{{name}}` token in `content` against `values`,
- * honoring `options.missing` for unresolved required placeholders. `validate`
- * reports which required placeholders are unresolved (`missing`) and which
- * supplied `values` keys are unused (`extra`) without producing output.
- * `parameters` projects this template's placeholders to the open
- * tool-parameters record shape (`schemaToParameters`'s return type from
- * `@orkestrel/contract`).
+ * `Template` implements this contract exactly, so the class exposes these
+ * members and no other public behavior.
  */
 export interface TemplateInterface {
 	readonly id: string
@@ -174,9 +170,33 @@ export interface TemplateInterface {
 	readonly description?: string
 	readonly category?: string
 	readonly tags?: readonly string[]
+	/** Returns the plain, JSON-serializable template data. */
 	definition(): TemplateDefinition
+	/**
+	 * Substitutes every `{{name}}` token in `content` against `values`.
+	 *
+	 * @remarks
+	 * `options.missing` governs an unresolved required placeholder, defaulting
+	 * to the instance's own {@link MissingPolicy}.
+	 */
 	fill(values?: TemplateFillValues, options?: TemplateFillOptions): string
+	/**
+	 * Reports which required placeholders would stay unresolved, and which
+	 * `values` keys go unused.
+	 *
+	 * @remarks
+	 * The unresolved names arrive as `missing` and the unused keys as `extra`,
+	 * and neither reading produces output.
+	 */
 	validate(values?: TemplateFillValues): TemplateValidationResult
+	/**
+	 * Projects the declared placeholders to the open tool-parameters record
+	 * shape.
+	 *
+	 * @remarks
+	 * The shape is `schemaToParameters`'s return type from
+	 * `@orkestrel/contract`.
+	 */
 	parameters(): Readonly<Record<string, unknown>> | undefined
 }
 
@@ -216,39 +236,70 @@ export interface TemplateManagerOptions {
 }
 
 /**
- * Declares the template registry — a self-owning, id-keyed record-holder with
- * singular/plural accessors and batch overloads.
+ * Declares the registry contract a consumer holds — a self-owning, id-keyed
+ * record-holder with singular and plural accessors over the templates it
+ * registers.
  *
  * @remarks
- * `register` accepts either a constructed {@link TemplateInterface} or a
- * plain {@link TemplateOptions} bag (constructed internally), and throws a
- * {@link TemplateError} coded `CONFLICT` when the id already exists unless
- * `options.replace` is `true`. `template` returns `undefined` for an unknown
- * id; `fill`, `validate`, and `parameters` throw `NOTFOUND` for one, because
- * each needs a template to proceed. `remove()` removes every registered
- * template. `remove`'s batch form removes every present id and reports
- * `true` only when all listed ids were present. `destroy` tears the registry
- * down — it drops every registered template, destroys the owned emitter, emits
- * nothing, and is idempotent.
+ * `TemplateManager` implements this contract exactly, so the class exposes
+ * these members and no other public behavior. The by-id calls split on what
+ * an unknown id means to each: `template` reports its absence as `undefined`,
+ * while `fill`, `validate`, and `parameters` throw a {@link TemplateError}
+ * coded `NOTFOUND`, because each needs a template to proceed.
  */
 export interface TemplateManagerInterface {
 	readonly emitter: EmitterInterface<TemplateManagerEventMap>
 	readonly count: number
+	/**
+	 * Registers one template, or overwrites the entry sharing its id when
+	 * `options.replace` is `true`, and emits `register`.
+	 *
+	 * @remarks
+	 * The template arrives as a constructed {@link TemplateInterface} or as a
+	 * plain {@link TemplateOptions} bag, which is constructed internally. A
+	 * duplicate id without `options.replace` throws a {@link TemplateError}
+	 * coded `CONFLICT`.
+	 */
 	register(
 		template: TemplateInterface | TemplateOptions,
 		options?: TemplateRegisterOptions,
 	): TemplateInterface
+	/** Returns one registered template by id, or `undefined` when the id is unregistered. */
 	template(id: string): TemplateInterface | undefined
+	/** Lists every registered template. */
 	templates(): readonly TemplateInterface[]
+	/** Filters registered templates by `name`, `category`, and `tag` — every supplied field must match. */
 	find(query?: TemplateQuery): readonly TemplateInterface[]
+	/** Reports whether a template with the given id is registered. */
 	has(id: string): boolean
+	/**
+	 * Removes the listed templates by id, one template by id, or every
+	 * registered template, emitting `remove` once per removed template.
+	 *
+	 * @remarks
+	 * The batch form removes every present id and reports `true` only when
+	 * every listed id was present, so one absent id turns the answer `false`
+	 * while the present ids still remove. The no-argument form removes every
+	 * registered template and reports nothing.
+	 */
 	remove(ids: readonly string[]): boolean
 	remove(id: string): boolean
 	remove(): void
+	/** Removes every registered template, emitting `clear`. */
 	clear(): void
+	/**
+	 * Tears the registry down: drops every registered template and destroys the
+	 * owned emitter. Idempotent.
+	 *
+	 * @remarks
+	 * Teardown emits nothing, because the emitter is being released.
+	 */
 	destroy(): void
+	/** Fills a registered template by id. */
 	fill(id: string, values?: TemplateFillValues, options?: TemplateFillOptions): string
+	/** Validates values against a registered template by id. */
 	validate(id: string, values?: TemplateFillValues): TemplateValidationResult
+	/** Projects a registered template's parameters by id. */
 	parameters(id: string): Readonly<Record<string, unknown>> | undefined
 }
 

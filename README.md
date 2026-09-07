@@ -1,11 +1,13 @@
 # @orkestrel/template
 
-A stateful template registry and filler with typed placeholders — `{{name}}`
-tokens in a `content` string, resolved against a values record by a
-single-pass fill engine, and registered and looked up by id through
-`TemplateManager`. Every fill lookup refuses a prototype-pollution-unsafe
-field path: any segment in `UNSAFE_FIELD_SEGMENTS` (`__proto__`,
-`constructor`, `prototype`) is refused before the record is ever read. Part of
+> A named, versionable template layer: `{{name}}` tokens in a `content`
+> string, resolved against a values record by a single-pass fill engine, and
+> registered and looked up by id through a self-owning `TemplateManager`.
+
+Declare a template with the `createTemplate` function, fill it against the
+values record your caller supplies, and register it in a `TemplateManager`
+where several templates are looked up by id. Reach for `validate` where you
+need to know which placeholders a fill would reject before you run it. Part of
 the `@orkestrel` line.
 
 ## Install

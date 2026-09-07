@@ -18,13 +18,14 @@ import { TemplateError } from '../errors.js'
 import { Template } from './Template.js'
 
 /**
- * Represents the template registry — a self-owning, id-keyed record-holder for the
- * {@link TemplateInterface} instances a consumer registers, looks up, fills,
- * and validates by id, with singular/plural accessors, batch `remove`
- * overloads, and emitter ownership.
+ * Represents the template registry — a self-owning, id-keyed record-holder for
+ * the {@link TemplateInterface} instances a consumer registers, looks up,
+ * fills, and validates by id — implementing `TemplateManagerInterface`
+ * exactly.
  *
  * @remarks
- * `register` accepts either a constructed {@link TemplateInterface} (kept
+ * Singular and plural accessors, the batch `remove` overloads, and ownership
+ * of the emitter all sit here. `register` accepts either a constructed {@link TemplateInterface} (kept
  * as-is, including its own `missing` / `locale` defaults) or a plain
  * {@link TemplateOptions} bag — constructed into a `Template` with this
  * manager's `missing` / `locale` defaults applied wherever the bag omits
