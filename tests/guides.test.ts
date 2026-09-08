@@ -1,10 +1,6 @@
 // The consumer-side guides-parity drop-in: runs `@orkestrel/guide`'s checks against
-// this repo's own `guides/README.md` manifest. The constants below are this
-// package's own, and are the only part a sibling package changes. Every flagship fence
-// in `guides/template.md` is transcribed at the end of this file and asserted against what
-// its comments claim: name resolution is not a behavioural proof, so a fence documenting a
-// value the code contradicts is exactly what the transcriptions catch. Change a fence,
-// change its transcription.
+// this repo's own `guides/README.md` manifest. The constants that follow are this
+// package's own, as is the executed section that closes the file.
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -55,7 +51,7 @@ const MODULES = Object.freeze({ '@orkestrel/template': 'src/core', '@src/core': 
  *
  * A class that one-class-per-file evicted from its single consumer cannot become a
  * local, so it stays exported without being public. Naming it here is what makes that
- * intentional rather than forgotten — and the second assertion below fails when a name
+ * intentional rather than forgotten — and the assertion that follows it fails when a name
  * here stops being stranded, so the list cannot rot.
  */
 const INTERNAL: readonly string[] = Object.freeze([])

@@ -33,7 +33,7 @@ escaped `\{{` always emits a literal `{{`, regardless of policy.
 
 ### Types
 
-A `Shape` cell holds an interface's data members as bare names in braces, `?` marking an optional member and `plus` introducing its call-signature members, and a type alias's own type literal with a union's arms escaped as `\|`.
+A `Shape` cell holds an interface's data members as bare names in braces, `?` marking an optional member and `plus` introducing its call-signature members, and a type alias's own type literal with a union's arms escaped as `\|`. An extended interface's name comes before `plus`, with the members it adds after.
 
 | Type                       | Kind      | Shape                                                                                                                       | Summary                                                                                                                                                                                  |
 | -------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -44,7 +44,7 @@ A `Shape` cell holds an interface's data members as bare names in braces, `?` ma
 | `TemplatePlaceholder`      | interface | `{ name, path?, required?, fallback?, description? }`                                                                       | Represents one placeholder a `TemplateDefinition`'s `content` declares — its lookup name, an optional field path into the values record, whether it is required, and a literal fallback. |
 | `TemplateDefinition`       | interface | `{ id, name, content, placeholders, summary?, description?, category?, tags? }`                                             | Represents a named, versionable template record — pure data, no behavior.                                                                                                                |
 | `TemplateFillOptions`      | interface | `{ missing?, locale? }`                                                                                                     | Carries the per-call options for `TemplateInterface#fill` / `TemplateManagerInterface#fill`.                                                                                             |
-| `TemplateFillContext`      | interface | `{ missing?, locale?, placeholders? }`                                                                                      | Carries the full option bag `fillTemplate` takes — the per-call `TemplateFillOptions` plus the declared placeholders tokens resolve against.                                             |
+| `TemplateFillContext`      | interface | `TemplateFillOptions plus { placeholders? }`                                                                                | Carries the full option bag `fillTemplate` takes — the per-call `TemplateFillOptions` plus the declared placeholders tokens resolve against.                                             |
 | `TemplateTokenResolution`  | interface | `{ value, declared, required }`                                                                                             | Represents one `{{name}}` token's resolution — the single token rule `fillTemplate` and `TemplateInterface#validate` share.                                                              |
 | `TemplateRegisterOptions`  | interface | `{ replace? }`                                                                                                              | Carries the options for `TemplateManagerInterface#register`.                                                                                                                             |
 | `TemplateValidationResult` | interface | `{ valid, missing, extra }`                                                                                                 | Reports the outcome of `TemplateInterface#validate` — which required placeholders are unresolved, and which supplied values are unused.                                                  |
@@ -144,6 +144,8 @@ placeholderShape([{ name: 'city' }]) // an object ContractShape with a `city` st
 | `createTemplateManager` | function | Creates a working `TemplateManagerInterface`, optionally seeded with the templates the options carry, backed by the `TemplateManager` class. |
 
 #### Create a template and a registry
+
+Builds a template and fills it directly, then seeds a registry with several templates and queries them by category and id.
 
 ```ts
 import { createTemplate, createTemplateManager } from '@orkestrel/template'
