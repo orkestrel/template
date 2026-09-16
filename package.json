@@ -1,6 +1,6 @@
 {
 	"name": "@orkestrel/template",
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"description": "Stateful template registry and filler with typed placeholders. Part of the @orkestrel line.",
 	"keywords": [
 		"template",
