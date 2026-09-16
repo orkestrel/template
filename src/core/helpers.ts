@@ -5,7 +5,7 @@ import type {
 	TemplatePlaceholder,
 	TemplateTokenResolution,
 } from './types.js'
-import { isFiniteNumber, resolveField } from '@orkestrel/contract'
+import { isArray, isFiniteNumber, resolveField } from '@orkestrel/contract'
 import {
 	DEFAULT_LOCALE,
 	DEFAULT_MISSING_POLICY,
@@ -76,7 +76,7 @@ export function formatValue(value: unknown, locale: string): string {
  * ```
  */
 export function resolveSafeField(record: TemplateFillValues, path: FieldPath): unknown {
-	const segments = Array.isArray(path) ? path : [path]
+	const segments = isArray(path) ? path : [path]
 	if (segments.some((segment) => UNSAFE_FIELD_SEGMENTS.includes(segment))) return undefined
 	return resolveField(record, path)
 }

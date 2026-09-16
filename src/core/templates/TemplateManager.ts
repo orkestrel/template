@@ -12,6 +12,7 @@ import type {
 	TemplateValidationResult,
 } from '../types.js'
 import type { EmitterInterface } from '@orkestrel/emitter'
+import { isFunction, isString } from '@orkestrel/contract'
 import { Emitter } from '@orkestrel/emitter'
 import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY } from '../constants.js'
 import { TemplateError } from '../errors.js'
@@ -177,7 +178,7 @@ export class TemplateManager implements TemplateManagerInterface {
 			this.#templates.clear()
 			return
 		}
-		if (typeof target === 'string') {
+		if (isString(target)) {
 			const instance = this.#templates.get(target)
 			if (instance === undefined) return false
 			this.#templates.delete(target)
@@ -275,11 +276,11 @@ export class TemplateManager implements TemplateManagerInterface {
 	#isInstance(template: TemplateInterface | TemplateOptions): template is TemplateInterface {
 		return (
 			'fill' in template &&
-			typeof template.fill === 'function' &&
+			isFunction(template.fill) &&
 			'validate' in template &&
-			typeof template.validate === 'function' &&
+			isFunction(template.validate) &&
 			'parameters' in template &&
-			typeof template.parameters === 'function'
+			isFunction(template.parameters)
 		)
 	}
 

@@ -1,4 +1,5 @@
 import type { TemplateErrorCode } from './types.js'
+import { isInstance } from '@orkestrel/contract'
 
 // Misuse of the template layer `throw`s a `TemplateError` carrying a
 // machine-readable `code`, so a `catch` branches on `error.code`.
@@ -49,5 +50,5 @@ export class TemplateError extends Error {
  * ```
  */
 export function isTemplateError(value: unknown): value is TemplateError {
-	return value instanceof TemplateError
+	return isInstance(value, TemplateError)
 }

@@ -9,7 +9,7 @@ import type {
 	TemplatePlaceholder,
 	TemplateValidationResult,
 } from '../types.js'
-import { createContract, schemaToParameters } from '@orkestrel/contract'
+import { createContract, isArray, isString, schemaToParameters } from '@orkestrel/contract'
 import { DEFAULT_LOCALE, DEFAULT_MISSING_POLICY, FILL_PATTERN } from '../constants.js'
 import { fillTemplate, resolveToken } from '../helpers.js'
 import { placeholderShape } from '../shapers.js'
@@ -55,7 +55,7 @@ export class Template implements TemplateInterface {
 				})
 			}
 			seenNames.add(placeholder.name)
-			if (Array.isArray(placeholder.path) && placeholder.path.length === 0) {
+			if (isArray(placeholder.path) && placeholder.path.length === 0) {
 				throw new TemplateError(
 					'INVALID',
 					`Placeholder path must not be empty: ${placeholder.name}`,
@@ -64,7 +64,7 @@ export class Template implements TemplateInterface {
 			}
 		}
 
-		this.id = typeof options.id === 'string' ? options.id : crypto.randomUUID()
+		this.id = isString(options.id) ? options.id : crypto.randomUUID()
 		this.name = options.name
 		this.content = options.content
 		this.placeholders = placeholders
