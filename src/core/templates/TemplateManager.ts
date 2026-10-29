@@ -185,17 +185,7 @@ export class TemplateManager implements TemplateManagerInterface {
 			this.#emitter.emit('remove', instance)
 			return true
 		}
-		let all = true
-		for (const id of target) {
-			const instance = this.#templates.get(id)
-			if (instance === undefined) {
-				all = false
-				continue
-			}
-			this.#templates.delete(id)
-			this.#emitter.emit('remove', instance)
-		}
-		return all
+		return this.#remove(target).reduce((all, removed) => removed && all, true)
 	}
 
 	/** Removes every registered template, emitting `clear`. */
@@ -269,6 +259,19 @@ export class TemplateManager implements TemplateManagerInterface {
 			missing: template.missing ?? this.#missing,
 			locale: template.locale ?? this.#locale,
 		})
+	}
+
+	*#remove(target: readonly string[]): Generator<boolean> {
+		for (const id of target) {
+			const instance = this.#templates.get(id)
+			if (instance === undefined) {
+				yield false
+				continue
+			}
+			this.#templates.delete(id)
+			this.#emitter.emit('remove', instance)
+			yield true
+		}
 	}
 
 	// A TemplateOptions bag is plain data with no `fill` / `validate` /

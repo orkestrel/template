@@ -47,14 +47,13 @@ export class Template implements TemplateInterface {
 
 	constructor(options: TemplateOptions) {
 		const placeholders = options.placeholders ?? []
-		const seenNames = new Set<string>()
-		for (const placeholder of placeholders) {
-			if (seenNames.has(placeholder.name)) {
+		Iterator.from(placeholders).reduce<readonly string[]>((names, placeholder) => {
+			if (names.includes(placeholder.name)) {
 				throw new TemplateError('INVALID', `Duplicate placeholder name: ${placeholder.name}`, {
 					name: placeholder.name,
 				})
 			}
-			seenNames.add(placeholder.name)
+			const name = placeholder.name
 			if (isArray(placeholder.path) && placeholder.path.length === 0) {
 				throw new TemplateError(
 					'INVALID',
@@ -62,7 +61,8 @@ export class Template implements TemplateInterface {
 					{ name: placeholder.name },
 				)
 			}
-		}
+			return [...names, name]
+		}, [])
 
 		this.id = isString(options.id) ? options.id : crypto.randomUUID()
 		this.name = options.name
@@ -156,23 +156,16 @@ export class Template implements TemplateInterface {
 	 */
 	validate(values?: TemplateFillValues): TemplateValidationResult {
 		const record = values ?? {}
-		const missing: string[] = []
-		const seen = new Set<string>()
-
 		const pattern = new RegExp(FILL_PATTERN.source, FILL_PATTERN.flags)
-		for (const match of this.content.matchAll(pattern)) {
-			const rawToken = match[1]
-			if (rawToken === undefined) continue
-			const token = rawToken.trim()
-			if (seen.has(token)) continue
-			seen.add(token)
-
+		const tokens = new Set(
+			Array.from(this.content.matchAll(pattern)).flatMap((match) =>
+				match[1] === undefined ? [] : [match[1].trim()],
+			),
+		)
+		const missing = [...tokens].filter((token) => {
 			const { value, declared, required } = resolveToken(record, this.placeholders, token)
-
-			if (value === undefined && declared?.fallback === undefined && required) {
-				missing.push(token)
-			}
-		}
+			return value === undefined && declared?.fallback === undefined && required
+		})
 
 		const declaredNames = new Set(this.placeholders.map((placeholder) => placeholder.name))
 		const extra = Object.keys(record).filter((key) => !declaredNames.has(key))

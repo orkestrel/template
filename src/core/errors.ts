@@ -1,5 +1,5 @@
 import type { TemplateErrorCode } from './types.js'
-import { isInstance } from '@orkestrel/contract'
+import { holds, INTRINSICS, isObject } from '@orkestrel/contract'
 
 // Misuse of the template layer `throw`s a `TemplateError` carrying a
 // machine-readable `code`, so a `catch` branches on `error.code`.
@@ -26,6 +26,7 @@ export class TemplateError extends Error {
 		context?: Readonly<Record<string, unknown>>,
 	) {
 		super(message)
+		INTRINSICS.define(this, Symbol.for('@orkestrel/template.TemplateError'), { value: this })
 		this.name = 'TemplateError'
 		this.code = code
 		if (context !== undefined) this.context = context
@@ -34,6 +35,10 @@ export class TemplateError extends Error {
 
 /**
  * Narrows an unknown caught value to a {@link TemplateError}.
+ *
+ * @remarks
+ * Recognizes self-branded errors from other package copies and subclasses, and
+ * refuses transparent proxies and unbranded look-alikes.
  *
  * @param value - The value to test (typically a `catch` binding)
  * @returns True if `value` is a {@link TemplateError}; false otherwise
@@ -50,5 +55,17 @@ export class TemplateError extends Error {
  * ```
  */
 export function isTemplateError(value: unknown): value is TemplateError {
-	return isInstance(value, TemplateError)
+	return holds(() => {
+		if (!(value instanceof Error) || INTRINSICS.prototype(value) === Error.prototype) return false
+		if (
+			INTRINSICS.describe(value, Symbol.for('@orkestrel/template.TemplateError'))?.value !== value
+		)
+			return false
+		const code: unknown = INTRINSICS.reflect.read(value, 'code')
+		const context: unknown = INTRINSICS.reflect.read(value, 'context')
+		return (
+			(code === 'MISSING' || code === 'NOTFOUND' || code === 'INVALID' || code === 'CONFLICT') &&
+			(context === undefined || isObject(context))
+		)
+	})
 }

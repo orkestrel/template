@@ -3,6 +3,27 @@ import { isTemplateError, Template, TemplateManager } from '@src/core'
 import { captureError, createRecorder } from '@orkestrel/test'
 import { describe, expect, it } from 'vitest'
 
+function createPlainTemplate(): TemplateInterface {
+	return {
+		id: 'plain',
+		name: 'plain',
+		content: 'Hi {{name}}',
+		placeholders: [],
+		definition() {
+			return { id: 'plain', name: 'plain', content: 'Hi {{name}}', placeholders: [] }
+		},
+		fill(values) {
+			return `Hi ${String(values?.name ?? '')}`
+		},
+		validate() {
+			return { valid: true, missing: [], extra: [] }
+		},
+		parameters() {
+			return undefined
+		},
+	}
+}
+
 describe('TemplateManager#register', () => {
 	it('registers a TemplateOptions bag and returns the constructed instance', () => {
 		const manager = new TemplateManager()
@@ -432,29 +453,7 @@ describe('TemplateManager — fill/validate/parameters delegation', () => {
 describe('TemplateManager — structural passthrough (R7)', () => {
 	it('registers a plain object implementing TemplateInterface as-is (not a Template instance)', () => {
 		const manager = new TemplateManager()
-		const plain: TemplateInterface = {
-			id: 'plain',
-			name: 'plain',
-			content: 'Hi {{name}}',
-			placeholders: [],
-			definition() {
-				return {
-					id: 'plain',
-					name: 'plain',
-					content: 'Hi {{name}}',
-					placeholders: [],
-				}
-			},
-			fill(values) {
-				return `Hi ${String(values?.name ?? '')}`
-			},
-			validate() {
-				return { valid: true, missing: [], extra: [] }
-			},
-			parameters() {
-				return undefined
-			},
-		}
+		const plain = createPlainTemplate()
 
 		const registered = manager.register(plain)
 

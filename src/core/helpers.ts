@@ -175,7 +175,6 @@ export function fillTemplate(
 	const record = values ?? {}
 
 	const missingNames: string[] = []
-	const seen = new Set<string>()
 
 	const pattern = new RegExp(FILL_PATTERN.source, FILL_PATTERN.flags)
 	const result = content.replace(pattern, (matchText: string, rawToken: string | undefined) => {
@@ -190,8 +189,7 @@ export function fillTemplate(
 		if (missing === 'literal') return matchText
 		if (missing === 'empty') return ''
 
-		if (required && !seen.has(token)) {
-			seen.add(token)
+		if (required && !missingNames.includes(token)) {
 			missingNames.push(token)
 		}
 		return ''

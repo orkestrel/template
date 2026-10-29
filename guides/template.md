@@ -81,6 +81,9 @@ FILL_PATTERN.source // the `{{name}}` / `\{{` substitution pattern
 
 ### Errors
 
+The guard recognizes self-branded errors across package copies and subclasses.
+It refuses transparent proxies and unbranded look-alikes.
+
 | API               | Kind     | Summary                                                                                                                                                                 |
 | ----------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TemplateError`   | class    | Represents an error thrown by the template layer — a machine-readable `TemplateErrorCode` and an optional `context` record naming the offending id or placeholder name. |
