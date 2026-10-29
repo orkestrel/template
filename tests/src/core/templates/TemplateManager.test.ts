@@ -2,27 +2,7 @@ import type { TemplateInterface } from '@src/core'
 import { isTemplateError, Template, TemplateManager } from '@src/core'
 import { captureError, createRecorder } from '@orkestrel/test'
 import { describe, expect, it } from 'vitest'
-
-function createPlainTemplate(): TemplateInterface {
-	return {
-		id: 'plain',
-		name: 'plain',
-		content: 'Hi {{name}}',
-		placeholders: [],
-		definition() {
-			return { id: 'plain', name: 'plain', content: 'Hi {{name}}', placeholders: [] }
-		},
-		fill(values) {
-			return `Hi ${String(values?.name ?? '')}`
-		},
-		validate() {
-			return { valid: true, missing: [], extra: [] }
-		},
-		parameters() {
-			return undefined
-		},
-	}
-}
+import { createPlainTemplate } from '../../../setup.js'
 
 describe('TemplateManager#register', () => {
 	it('registers a TemplateOptions bag and returns the constructed instance', () => {
