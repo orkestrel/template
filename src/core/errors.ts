@@ -1,5 +1,5 @@
 import type { TemplateErrorCode } from './types.js'
-import { holds, INTRINSICS, isObject } from '@orkestrel/contract'
+import { holds, INTRINSICS, isFunction, isObject } from '@orkestrel/contract'
 
 // Misuse of the template layer `throw`s a `TemplateError` carrying a
 // machine-readable `code`, so a `catch` branches on `error.code`.
@@ -65,7 +65,7 @@ export function isTemplateError(value: unknown): value is TemplateError {
 		const context: unknown = INTRINSICS.reflect.read(value, 'context')
 		return (
 			(code === 'MISSING' || code === 'NOTFOUND' || code === 'INVALID' || code === 'CONFLICT') &&
-			(context === undefined || isObject(context))
+			(context === undefined || isObject(context) || isFunction(context))
 		)
 	})
 }

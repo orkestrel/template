@@ -797,6 +797,8 @@ import { createRequire } from 'node:module'
 import * as imported from '@orkestrel/template'
 const required = createRequire(import.meta.url)('@orkestrel/template')
 const copied = await import(${JSON.stringify(pathToFileURL(join(copy, 'dist/src/core/index.js')).href)})
+const entries = [imported, required, copied]
+assert.equal(new Set(entries.map((entry) => entry.TemplateError)).size, entries.length)
 for (const source of [imported, required, copied]) {
   const error = new source.TemplateError('INVALID', 'invalid', { id: 'example' })
   class Derived extends source.TemplateError {
