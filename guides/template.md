@@ -35,7 +35,7 @@ escaped `\{{` always emits a literal `{{`, regardless of policy.
 
 A `Shape` cell holds an interface's data members as bare names in braces, `?` marking an optional member and `plus` introducing its call-signature members, and a type alias's own type literal with a union's arms escaped as `\|`. An extended interface's name comes before `plus`, with the members it adds after.
 
-| Type                       | Kind      | Shape                                                                                                                       | Summary                                                                                                                                                                                  |
+| Name                       | Kind      | Shape                                                                                                                       | Summary                                                                                                                                                                                  |
 | -------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `MissingPolicy`            | type      | `'error' \| 'empty' \| 'literal'`                                                                                           | Names how `TemplateInterface#fill` handles an unresolved required placeholder.                                                                                                           |
 | `TemplateFillValues`       | type      | `Readonly<Record<string, unknown>>`                                                                                         | Represents the values a `TemplateInterface#fill` / `#validate` call resolves placeholders against.                                                                                       |
@@ -58,7 +58,7 @@ A `Shape` cell holds an interface's data members as bare names in braces, `?` ma
 
 A `Shape` cell holds the constant's declared type.
 
-| API                      | Kind  | Shape               | Summary                                                                                                                                                                                                              |
+| Name                     | Kind  | Shape               | Summary                                                                                                                                                                                                              |
 | ------------------------ | ----- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `FILL_PATTERN`           | const | `RegExp`            | Holds the single-pass `{{name}}` substitution pattern shared by `Template#fill` and `Template#validate`.                                                                                                             |
 | `DEFAULT_MISSING_POLICY` | const | `MissingPolicy`     | Holds `'error'`, the default `missing` policy for `Template#fill` / `TemplateManager#fill` when unspecified.                                                                                                         |
@@ -84,7 +84,7 @@ FILL_PATTERN.source // the `{{name}}` / `\{{` substitution pattern
 The guard recognizes self-branded errors across package copies and subclasses.
 It refuses transparent proxies and unbranded look-alikes.
 
-| API               | Kind     | Summary                                                                                                                                                                 |
+| Name              | Kind     | Summary                                                                                                                                                                 |
 | ----------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TemplateError`   | class    | Represents an error thrown by the template layer — a machine-readable `TemplateErrorCode` and an optional `context` record naming the offending id or placeholder name. |
 | `isTemplateError` | function | Narrows an unknown caught value to a `TemplateError`.                                                                                                                   |
@@ -104,7 +104,7 @@ try {
 Pure, exported utility functions — the referentially-transparent leaves behind
 `Template#fill` / `#validate`.
 
-| API                | Kind     | Summary                                                                                                                  |
+| Name               | Kind     | Summary                                                                                                                  |
 | ------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `formatValue`      | function | Formats a resolved fill value for substitution into a template's `content`.                                              |
 | `resolveSafeField` | function | Resolves a field path against a fill-values record, refusing any path that touches a prototype-pollution-unsafe segment. |
@@ -129,7 +129,7 @@ fillTemplate('Limit {{limit}}', { limit: 5010 }, { missing: 'empty' }) // 'Limit
 The `@orkestrel/contract` shape values built from declared template data —
 above the helper leaves, consuming them and never consumed by them.
 
-| API                | Kind     | Summary                                                                                      |
+| Name               | Kind     | Summary                                                                                      |
 | ------------------ | -------- | -------------------------------------------------------------------------------------------- |
 | `placeholderShape` | function | Builds the `@orkestrel/contract` object shape describing a template's declared placeholders. |
 
@@ -141,7 +141,7 @@ placeholderShape([{ name: 'city' }]) // an object ContractShape with a `city` st
 
 ### Factories
 
-| API                     | Kind     | Summary                                                                                                                                      |
+| Name                    | Kind     | Summary                                                                                                                                      |
 | ----------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `createTemplate`        | function | Creates a working `TemplateInterface` from a `TemplateOptions` bag, backed by the `Template` class.                                          |
 | `createTemplateManager` | function | Creates a working `TemplateManagerInterface`, optionally seeded with the templates the options carry, backed by the `TemplateManager` class. |
@@ -171,7 +171,7 @@ templates.has('missing') // false
 
 ### Classes
 
-| API               | Kind  | Summary                                                                                                                                                                                                                      |
+| Name              | Kind  | Summary                                                                                                                                                                                                                      |
 | ----------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Template`        | class | Represents a named, versionable template — `{{name}}` tokens in `content`, filled against a values record — implementing `TemplateInterface` exactly.                                                                        |
 | `TemplateManager` | class | Represents the template registry — a self-owning, id-keyed record-holder for the `TemplateInterface` instances a consumer registers, looks up, fills, and validates by id — implementing `TemplateManagerInterface` exactly. |
